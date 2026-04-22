@@ -1,0 +1,60 @@
+---
+import '../styles/global.css';
+
+interface Props {
+  title: string;
+  description?: string;
+  ogType?: 'website' | 'article';
+}
+
+const { title, description = 'Crypto-native AI infrastructure, DePIN compute, and self-hosted systems.', ogType = 'website' } = Astro.props;
+const canonicalURL = new URL(Astro.url.pathname, Astro.site);
+---
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content={description} />
+  <meta property="og:type" content={ogType} />
+  <meta property="og:title" content={title} />
+  <meta property="og:description" content={description} />
+  <meta property="og:site_name" content="BitCryptic" />
+  <link rel="canonical" href={canonicalURL} />
+  <link rel="alternate" type="application/rss+xml" title="BitCryptic Blog" href="/rss.xml" />
+  <title>{title} — BitCryptic</title>
+</head>
+<body class="min-h-screen bg-bc-black text-bc-text">
+
+  <header class="border-b border-bc-border">
+    <div class="max-w-3xl mx-auto px-6 py-5 flex items-center justify-between">
+      <a href="https://bitcryptic.com" class="flex items-center gap-3 group no-underline">
+        <span class="text-bc-gold font-mono text-sm tracking-widest uppercase group-hover:text-bc-white transition-colors">
+          ← BitCryptic™
+        </span>
+      </a>
+      <a href="/" class="font-display text-xl text-bc-white tracking-tight hover:text-bc-gold transition-colors">
+        Blog
+      </a>
+      <a href="/rss.xml" class="text-bc-muted hover:text-bc-gold transition-colors" title="RSS Feed" aria-label="RSS Feed">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M6.18 15.64a2.18 2.18 0 0 1 2.18 2.18C8.36 19.01 7.38 20 6.18 20C4.98 20 4 19.01 4 17.82a2.18 2.18 0 0 1 2.18-2.18M4 4.44A15.56 15.56 0 0 1 19.56 20h-2.83A12.73 12.73 0 0 0 4 7.27V4.44m0 5.66a9.9 9.9 0 0 1 9.9 9.9h-2.83A7.07 7.07 0 0 0 4 12.93V10.1z"/>
+        </svg>
+      </a>
+    </div>
+  </header>
+
+  <main class="max-w-3xl mx-auto px-6 py-12">
+    <slot />
+  </main>
+
+  <footer class="border-t border-bc-border mt-24">
+    <div class="max-w-3xl mx-auto px-6 py-8 flex items-center justify-between text-bc-muted text-sm font-mono">
+      <span>BitCryptic™</span>
+      <span>Seaforth, NSW · Self-hosted</span>
+    </div>
+  </footer>
+
+</body>
+</html>
