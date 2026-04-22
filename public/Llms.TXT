@@ -1,0 +1,15 @@
+# BitCryptic
+
+> Crypto-native AI infrastructure, DePIN compute, and self-hosted systems.
+> Based in Seaforth, NSW, Australia.
+
+## Blog
+
+- Index: https://blog.bitcryptic.com
+- Feed: https://blog.bitcryptic.com/rss.xml
+- Raw markdown source: https://github.com/bitcryptic-gw/bitcryptic-blog-content
+
+## Topics
+
+DePIN, AI inference, self-hosted infrastructure, Bitcoin/crypto nodes, Docker/Unraid,
+home networking, blockchain, x402 agentic payments, local LLMs.
