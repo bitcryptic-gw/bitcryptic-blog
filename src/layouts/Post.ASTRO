@@ -1,0 +1,53 @@
+---
+import Base from './Base.astro';
+
+interface Props {
+  title: string;
+  description: string;
+  date: Date;
+  updated?: Date;
+  author: string;
+  tags: string[];
+}
+
+const { title, description, date, updated, author, tags } = Astro.props;
+
+const dateStr = date.toLocaleDateString('en-AU', { year: 'numeric', month: 'long', day: 'numeric' });
+const updatedStr = updated?.toLocaleDateString('en-AU', { year: 'numeric', month: 'long', day: 'numeric' });
+---
+
+<Base title={title} description={description} ogType="article">
+  <article>
+    <header class="mb-12 pb-8 border-b border-bc-border">
+      <div class="flex flex-wrap gap-2 mb-4">
+        {tags.map(tag => (
+          <span class="font-mono text-xs text-bc-gold border border-bc-gold-dim px-2 py-0.5 rounded">
+            {tag}
+          </span>
+        ))}
+      </div>
+      <h1 class="font-display text-4xl text-bc-white leading-tight mb-4">{title}</h1>
+      <p class="text-bc-muted text-lg mb-6">{description}</p>
+      <div class="font-mono text-sm text-bc-muted flex gap-4 flex-wrap">
+        <time datetime={date.toISOString()}>{dateStr}</time>
+        {updatedStr && <span>· Updated {updatedStr}</span>}
+        <span>· {author}</span>
+      </div>
+    </header>
+
+    <div class="prose prose-invert prose-lg max-w-none
+      prose-headings:font-display
+      prose-p:text-bc-text prose-p:leading-relaxed
+      prose-li:text-bc-text
+      prose-strong:text-bc-white
+      prose-hr:border-bc-border">
+      <slot />
+    </div>
+
+    <footer class="mt-16 pt-8 border-t border-bc-border">
+      <a href="/" class="font-mono text-sm text-bc-gold hover:text-bc-white transition-colors">
+        ← All posts
+      </a>
+    </footer>
+  </article>
+</Base>
