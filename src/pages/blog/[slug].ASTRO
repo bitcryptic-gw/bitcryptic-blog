@@ -1,0 +1,31 @@
+---
+import { getCollection } from 'astro:content';
+import Post from '../../layouts/Post.astro';
+
+export async function getStaticPaths() {
+  // SSR mode: this is not used at runtime but required for type inference
+  return [];
+}
+
+const { slug } = Astro.params;
+
+const posts = await getCollection('blog', ({ data }) => data.status === 'published');
+const post = posts.find(p => p.data.slug === slug);
+
+if (!post) {
+  return Astro.redirect('/404');
+}
+
+const { Content } = await post.render();
+---
+
+<Post
+  title={post.data.title}
+  description={post.data.description}
+  date={post.data.date}
+  updated={post.data.updated}
+  author={post.data.author}
+  tags={post.data.tags}
+>
+  <Content />
+</Post>
