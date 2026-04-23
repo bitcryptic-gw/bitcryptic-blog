@@ -2,16 +2,11 @@ FROM node:22-alpine
 
 WORKDIR /app
 
-# Install deps first for layer caching
 COPY package*.json ./
-RUN npm ci
+RUN npm ci --legacy-peer-deps
 
-# Copy app source (content dir is mounted at runtime)
 COPY . .
-
-# Ensure content dir exists for build — will be overlaid by volume mount
 RUN mkdir -p src/content/blog
-
 RUN npm run build
 
 EXPOSE 4321
