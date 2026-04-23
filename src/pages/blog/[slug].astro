@@ -24,3 +24,14 @@ for (const file of files) {
 
 if (!postData) return Astro.redirect('/404');
 ---
+
+<Post
+  title={postData.title}
+  description={postData.description}
+  date={postData.date}
+  updated={postData.updated}
+  author={postData.author}
+  tags={postData.tags}
+>
+  <div set:html={contentHtml} />
+</Post>
