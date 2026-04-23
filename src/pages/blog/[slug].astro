@@ -1,31 +1,26 @@
 ---
-import { getCollection, render } from 'astro:content';
 import Post from '../../layouts/Post.astro';
-
-export async function getStaticPaths() {
-  // SSR mode: this is not used at runtime but required for type inference
-  return [];
-}
+import fs from 'node:fs';
+import path from 'node:path';
+import matter from 'gray-matter';
+import { marked } from 'marked';
 
 const { slug } = Astro.params;
+const contentDir = '/app/src/content/blog';
+const files = fs.readdirSync(contentDir).filter(f => f.endsWith('.md'));
 
-const posts = await getCollection('blog', ({ data }) => data.status === 'published');
-const post = posts.find(p => p.data.slug === slug);
+let postData = null;
+let contentHtml = '';
 
-if (!post) {
-  return Astro.redirect('/404');
+for (const file of files) {
+  const raw = fs.readFileSync(path.join(contentDir, file), 'utf-8');
+  const { data, content } = matter(raw);
+  if (data.slug === slug && data.status === 'published') {
+    postData = data;
+    contentHtml = await marked(content);
+    break;
+  }
 }
 
-const { Content } = await render(post);
+if (!postData) return Astro.redirect('/404');
 ---
-
-<Post
-  title={post.data.title}
-  description={post.data.description}
-  date={post.data.date}
-  updated={post.data.updated}
-  author={post.data.author}
-  tags={post.data.tags}
->
-  <Content />
-</Post>
