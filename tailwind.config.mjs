@@ -12,8 +12,9 @@ export default {
           muted:      '#666666',
           text:       '#e0e0e0',
           white:      '#f5f5f5',
-          gold:       '#c9a84c',
-          'gold-dim': '#8a6f2e',
+          cyan:       '#00CDFE',
+          'cyan-dim': '#0099cc',
+          blue:       '#0058F2',
         },
       },
       fontFamily: {
