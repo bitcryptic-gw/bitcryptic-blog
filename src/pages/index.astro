@@ -1,58 +1,18 @@
 ---
-import { getCollection } from 'astro:content';
 import Base from '../layouts/Base.astro';
+import fs from 'node:fs';
+import path from 'node:path';
+import matter from 'gray-matter';
 
-const allPosts = await getCollection('blog', ({ data }) => data.status === 'published');
-const posts = allPosts.sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+const contentDir = '/app/src/content/blog';
+const files = fs.readdirSync(contentDir).filter(f => f.endsWith('.md'));
+
+const posts = files
+  .map(file => {
+    const raw = fs.readFileSync(path.join(contentDir, file), 'utf-8');
+    const { data } = matter(raw);
+    return data;
+  })
+  .filter(d => d.status === 'published')
+  .sort((a, b) => new Date(b.date).valueOf() - new Date(a.date).valueOf());
 ---
-
-<Base title="Blog">
-  <div class="mb-16">
-    <p class="font-mono text-xs text-bc-gold tracking-widest uppercase mb-3">BitCryptic™</p>
-    <h1 class="font-display text-5xl text-bc-white mb-4">Blog</h1>
-    <p class="text-bc-muted text-lg">
-      Crypto-native AI infrastructure, DePIN compute, and self-hosted systems.
-    </p>
-  </div>
-
-  {posts.length === 0 ? (
-    <p class="text-bc-muted font-mono text-sm">No posts published yet.</p>
-  ) : (
-    <div class="space-y-px">
-      {posts.map(post => {
-        const dateStr = post.data.date.toLocaleDateString('en-AU', {
-          year: 'numeric', month: 'short', day: 'numeric'
-        });
-        return (
-          <a
-            href={`/blog/${post.data.slug}`}
-            class="group block py-7 border-b border-bc-border hover:border-bc-gold-dim transition-colors no-underline"
-          >
-            <div class="flex items-start justify-between gap-6">
-              <div class="flex-1 min-w-0">
-                <h2 class="font-display text-xl text-bc-white group-hover:text-bc-gold transition-colors mb-2 leading-snug">
-                  {post.data.title}
-                </h2>
-                <p class="text-bc-muted text-sm leading-relaxed line-clamp-2">
-                  {post.data.description}
-                </p>
-                {post.data.tags.length > 0 && (
-                  <div class="flex flex-wrap gap-1.5 mt-3">
-                    {post.data.tags.map(tag => (
-                      <span class="font-mono text-xs text-bc-gold-dim border border-bc-border px-1.5 py-px rounded">
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </div>
-              <time class="font-mono text-xs text-bc-muted whitespace-nowrap pt-1 shrink-0">
-                {dateStr}
-              </time>
-            </div>
-          </a>
-        );
-      })}
-    </div>
-  )}
-</Base>
