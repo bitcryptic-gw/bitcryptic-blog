@@ -35,18 +35,12 @@ const posts = files
         const dateStr = new Date(post.date).toLocaleDateString('en-AU', {
           year: 'numeric', month: 'short', day: 'numeric'
         });
+        const postUrl = '/blog/' + post.slug;
         return (
           
-            {posts.map(post => {
-  const dateStr = new Date(post.date).toLocaleDateString('en-AU', {
-    year: 'numeric', month: 'short', day: 'numeric'
-  });
-  const postUrl = '/blog/' + post.slug;
-  return (
-    
-      href={postUrl}
-      class="group block py-7 border-b border-bc-border hover:border-bc-gold-dim transition-colors no-underline"
-    >
+            href={postUrl}
+            class="group block py-7 border-b border-bc-border hover:border-bc-gold-dim transition-colors no-underline"
+          >
             <div class="flex items-start justify-between gap-6">
               <div class="flex-1 min-w-0">
                 <h2 class="font-display text-xl text-bc-white group-hover:text-bc-gold transition-colors mb-2 leading-snug">
