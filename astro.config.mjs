@@ -7,4 +7,7 @@ export default defineConfig({
   adapter: node({ mode: 'standalone' }),
   integrations: [tailwind()],
   site: 'https://blog.bitcryptic.com',
+  security: {
+    checkOrigin: false,
+  },
 });
