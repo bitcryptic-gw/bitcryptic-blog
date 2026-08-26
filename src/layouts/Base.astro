@@ -24,6 +24,8 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
   <link rel="canonical" href={canonicalURL} />
   <link rel="alternate" type="application/rss+xml" title="BitCryptic Blog" href="/rss.xml" />
   <title>{title} — BitCryptic</title>
+  <!-- BitCryptic Blog — Umami analytics -->
+  <script defer src="https://webstats.bitcryptic.com/script.js" data-website-id="d183ecc5-3e7d-4a80-a70a-32fc1ba800c1"></script>
 </head>
 <body class="min-h-screen bg-bc-black text-bc-text text-lg">
 
