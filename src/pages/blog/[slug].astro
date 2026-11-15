@@ -1,41 +1,35 @@
 ---
 export const prerender = false;
 import Post from '../../layouts/Post.astro';
-import fs from 'node:fs';
-import path from 'node:path';
-import matter from 'gray-matter';
 import { marked } from 'marked';
+import { loadPosts } from '../../../scripts/validate-content.mjs';
 
 const { slug } = Astro.params;
-const contentDir = '/app/src/content/blog';
-const files = fs.readdirSync(contentDir).filter(f => f.endsWith('.md'));
+const contentDir = process.env.CONTENT_DIR ?? '/app/src/content/blog';
+const { posts, skipped } = loadPosts(contentDir);
 
-let postData = null;
-let contentHtml = '';
+// A post that fails validation is skipped here, not 500'd: the site keeps
+// serving everything else, and the sync loop will have refused to publish it
+// anyway.
+for (const { file, message } of skipped) console.warn(`[content] skipping ${file}: ${message}`);
 
-for (const file of files) {
-  const raw = fs.readFileSync(path.join(contentDir, file), 'utf-8');
-  const { data, content } = matter(raw);
-  if (data.slug === slug && data.status === 'published') {
-    postData = data;
-    contentHtml = await marked(content);
-    break;
-  }
-}
+const post = posts.find(p => p.slug === slug);
 
-if (!postData) return Astro.redirect('/404');
+if (!post) return Astro.redirect('/404');
+
+const contentHtml = await marked(post.content);
 ---
 
 <Post
-  title={postData.title}
-  description={postData.description}
-  date={postData.date}
-  updated={postData.updated}
-  author={postData.author}
-  tags={postData.tags}
-  supersededBy={postData.superseded_by}
-  supersededOn={postData.superseded_on}
-  supersededNote={postData.superseded_note}
+  title={post.title}
+  description={post.description}
+  date={post.date}
+  updated={post.updated}
+  author={post.author}
+  tags={post.tags}
+  supersededBy={post.superseded_by}
+  supersededOn={post.superseded_on}
+  supersededNote={post.superseded_note}
 >
   <div set:html={contentHtml} />
 </Post>

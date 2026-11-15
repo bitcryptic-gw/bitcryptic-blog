@@ -1,28 +1,26 @@
 export const prerender = false;
 import type { APIRoute } from 'astro';
-import fs from 'node:fs';
-import path from 'node:path';
-import matter from 'gray-matter';
+import { loadPosts } from '../../scripts/validate-content.mjs';
 
+/**
+ * Sitemap. Built from the same validated post list the pages use, so a post
+ * that fails validation is skipped here too (and logged) rather than breaking
+ * the document.
+ */
 export const GET: APIRoute = () => {
   const base = 'https://blog.bitcryptic.com';
-  const contentDir = '/app/src/content/blog';
+  const contentDir = process.env.CONTENT_DIR ?? '/app/src/content/blog';
 
   let postUrls: string[] = [];
 
   try {
-    const files = fs.readdirSync(contentDir).filter(f => f.endsWith('.md'));
-    for (const file of files) {
-      const raw = fs.readFileSync(path.join(contentDir, file), 'utf-8');
-      const { data } = matter(raw);
-      if (data.slug && data.status === 'published') {
-        postUrls.push(
-          `  <url><loc>${base}/blog/${data.slug}/</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>`
-        );
-      }
-    }
+    const { posts, skipped } = loadPosts(contentDir);
+    for (const { file, message } of skipped) console.warn(`[content] skipping ${file}: ${message}`);
+    postUrls = posts.map(p =>
+      `  <url><loc>${base}/blog/${p.slug}/</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>`
+    );
   } catch {
-    // content dir not mounted yet — sitemap will only contain homepage
+    // content dir not mounted yet — sitemap will only contain the homepage
   }
 
   const body = `<?xml version="1.0" encoding="UTF-8"?>

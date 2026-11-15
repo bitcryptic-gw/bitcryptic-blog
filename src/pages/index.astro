@@ -1,21 +1,21 @@
 ---
 export const prerender = false;
 import Base from '../layouts/Base.astro';
-import fs from 'node:fs';
-import path from 'node:path';
-import matter from 'gray-matter';
+import { loadPosts } from '../../scripts/validate-content.mjs';
 
-const contentDir = '/app/src/content/blog';
-const files = fs.readdirSync(contentDir).filter(f => f.endsWith('.md'));
+const contentDir = process.env.CONTENT_DIR ?? '/app/src/content/blog';
+const { posts, skipped } = loadPosts(contentDir);
 
-const posts = files
-  .map(file => {
-    const raw = fs.readFileSync(path.join(contentDir, file), 'utf-8');
-    const { data } = matter(raw);
-    return data;
-  })
-  .filter(d => d.status === 'published')
-  .sort((a, b) => new Date(b.date).valueOf() - new Date(a.date).valueOf());
+for (const { file, message } of skipped) console.warn(`[content] skipping ${file}: ${message}`);
+
+const visible = posts.map(post => ({
+  slug: post.slug,
+  title: post.title,
+  description: post.description,
+  date: post.date,
+  tags: post.tags,
+  superseded_by: post.superseded_by,
+}));
 ---
 
 <Base title="Blog">
@@ -27,11 +27,11 @@ const posts = files
     </p>
   </div>
 
-  {posts.length === 0 ? (
+  {visible.length === 0 ? (
     <p class="text-bc-muted font-mono text-sm">No posts published yet.</p>
   ) : (
     <div class="space-y-px">
-      {posts.map(post => {
+      {visible.map(post => {
         const dateStr = new Date(post.date).toLocaleDateString('en-AU', {
           year: 'numeric', month: 'short', day: 'numeric'
         });
