@@ -33,6 +33,9 @@ if (!postData) return Astro.redirect('/404');
   updated={postData.updated}
   author={postData.author}
   tags={postData.tags}
+  supersededBy={postData.superseded_by}
+  supersededOn={postData.superseded_on}
+  supersededNote={postData.superseded_note}
 >
   <div set:html={contentHtml} />
 </Post>

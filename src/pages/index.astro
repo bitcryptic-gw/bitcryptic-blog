@@ -44,6 +44,11 @@ const posts = files
                 <h2 class="font-display text-xl text-bc-white group-hover:text-bc-cyan transition-colors mb-2 leading-snug">
                   {post.title}
                 </h2>
+                {post.superseded_by && (
+                  <span class="inline-block font-mono text-xs text-bc-cyan-dim border border-bc-border px-1.5 py-px rounded mb-2">
+                    superseded
+                  </span>
+                )}
                 <p class="text-bc-muted text-sm leading-relaxed line-clamp-2">
                   {post.description}
                 </p>

@@ -8,16 +8,29 @@ interface Props {
   updated?: Date;
   author: string;
   tags: string[];
+  supersededBy?: string;
+  supersededOn?: Date;
+  supersededNote?: string;
 }
 
-const { title, description, date, updated, author, tags } = Astro.props;
+const { title, description, date, updated, author, tags, supersededBy, supersededNote } = Astro.props;
 
 const dateStr = date.toLocaleDateString('en-AU', { year: 'numeric', month: 'long', day: 'numeric' });
 const updatedStr = updated?.toLocaleDateString('en-AU', { year: 'numeric', month: 'long', day: 'numeric' });
+const monthYearStr = date.toLocaleDateString('en-AU', { year: 'numeric', month: 'long' });
 ---
 
 <Base title={title} description={description} ogType="article">
   <article>
+    {supersededBy && (
+      <div class="mb-10 border border-bc-border bg-bc-card px-5 py-4 rounded">
+        <p class="text-bc-muted text-sm leading-relaxed">
+          <strong class="text-bc-white">Kept for the record.</strong>{' '}
+          This post is from {monthYearStr} and has been superseded.{supersededNote ? ` ${supersededNote}` : ''}{' '}
+          See <a class="text-bc-cyan hover:text-bc-white transition-colors" href={`/blog/${supersededBy}/`}>the current state of MDF</a>.
+        </p>
+      </div>
+    )}
     <header class="mb-12 pb-8 border-b border-bc-border">
       <div class="flex flex-wrap gap-2 mb-4">
         {tags.map(tag => (

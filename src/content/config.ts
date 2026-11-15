@@ -11,6 +11,10 @@ const blog = defineCollection({
     tags:        z.array(z.string()).default([]),
     description: z.string(),
     status:      z.enum(['draft', 'published']).default('draft'),
+    // Superseded-post banner. All optional: a post without them renders as before.
+    superseded_by:   z.string().optional(),
+    superseded_on:   z.coerce.date().optional(),
+    superseded_note: z.string().optional(),
   }),
 });
 
