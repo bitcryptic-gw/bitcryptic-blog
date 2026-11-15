@@ -1,21 +1,24 @@
 /**
- * Startup guard for the web container.
+ * Per-mode startup check, run by scripts/start.sh before anything starts.
  *
- * The manual sync hook's secret must come from a mounted file, never from the
- * environment (an env var is visible in `docker inspect`). If the file is
- * configured but missing, unreadable or empty, this exits non-zero so the
- * container fails to start rather than running with a disabled or guessable
- * hook.
+ *   node scripts/check-secrets.mjs web    deploy-hook secret
+ *   node scripts/check-secrets.mjs sync   ntfy token (if configured)
+ *   node scripts/check-secrets.mjs        both (the default, for manual runs)
  *
- * Run it ahead of the server in the container command:
- *   node scripts/check-secrets.mjs && node ./dist/server/entry.mjs
+ * A secret that is configured but missing, unreadable or empty is fatal: exit 1.
+ * An unset secret variable is fine — that feature is simply off.
+ *
+ * Only the variable name and the file path are ever printed, never a value.
  */
-import { readSecret } from './sync.mjs';
+import { readSecret } from './secrets.mjs';
 
-const checks = [
-  ['DEPLOY_SECRET_FILE', 'deploy hook (DEPLOY_SECRET_FILE)'],
-  ['NTFY_TOKEN_FILE', 'ntfy token (NTFY_TOKEN_FILE)'],
-];
+const ALL = {
+  web: [['DEPLOY_SECRET_FILE', 'deploy hook (DEPLOY_SECRET_FILE)']],
+  sync: [['NTFY_TOKEN_FILE', 'ntfy token (NTFY_TOKEN_FILE)']],
+};
+
+const mode = process.argv[2] ?? '';
+const checks = mode && ALL[mode] ? ALL[mode] : [...ALL.web, ...ALL.sync];
 
 let failed = false;
 for (const [envName, label] of checks) {
@@ -23,7 +26,6 @@ for (const [envName, label] of checks) {
   if (!file) continue;
   try {
     readSecret(file, label);
-    // Never echo the value — only the fact that it loaded.
     console.log(`[check-secrets] ok: ${label} loaded from ${file}`);
   } catch (e) {
     console.error(`[check-secrets] FATAL: ${e.message}`);
@@ -31,5 +33,8 @@ for (const [envName, label] of checks) {
   }
 }
 
-if (failed) process.exit(1);
-console.log('[check-secrets] secret configuration is valid');
+if (failed) {
+  console.error('[check-secrets] refusing to start');
+  process.exit(1);
+}
+console.log(`[check-secrets] secret configuration is valid${mode ? ` (mode=${mode})` : ''}`);

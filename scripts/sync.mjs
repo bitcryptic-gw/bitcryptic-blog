@@ -30,6 +30,7 @@ import os from 'node:os';
 import { execFileSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
 import { validateContent } from './validate-content.mjs';
+import { readSecret } from './secrets.mjs';
 
 const CONTENT_DIR = process.env.CONTENT_DIR ?? '/app/src/content/blog';
 const STATUS_FILE = process.env.SYNC_STATUS_FILE ?? '/app/data/sync-status.json';
@@ -42,18 +43,8 @@ const GIT_TIMEOUT_MS = Number(process.env.SYNC_GIT_TIMEOUT_MS ?? 60_000);
 
 const log = (...parts) => console.log(new Date().toISOString(), '[sync]', ...parts);
 
-/** Read a secret from a file. Refuses to return an empty value. */
-export function readSecret(file, label) {
-  if (!file) return '';
-  let value;
-  try {
-    value = fs.readFileSync(file, 'utf-8').trim();
-  } catch {
-    throw new Error(`${label}: secret file ${file} is missing or unreadable — refusing to start`);
-  }
-  if (!value) throw new Error(`${label}: secret file ${file} is empty — refusing to start`);
-  return value;
-}
+// Shared with the startup checks; re-exported so existing callers keep working.
+export { readSecret };
 
 // Fail fast at startup, before any loop iteration, if a configured secret is absent.
 const NTFY_TOKEN = process.env.NTFY_TOKEN_FILE ? readSecret(NTFY_TOKEN_FILE, 'sync') : '';
