@@ -49,6 +49,48 @@ node scripts/validate-content.mjs <dir> [--strict-names]
 
 Exit code 0 = publishable, 1 = errors, 2 = the directory could not be read.
 
+## Serving markdown to agents (MDF)
+
+The blog is an MDF (Markdown First) site, free tier only. A browser gets HTML;
+an agent that asks for markdown gets markdown at the same URL:
+
+```sh
+curl -H 'Accept: text/markdown' https://blog.bitcryptic.com/blog/mdf-0-3-whats-changed/
+```
+
+- **The rule** (`src/lib/negotiate.js`): markdown is served only when
+  `text/markdown` is listed explicitly with `q > 0` and its `q` is at least the
+  `q` of `text/html`. `*/*`, `text/*`, a missing `Accept` and markdown at `q=0`
+  all get HTML.
+- **Routes that negotiate:** `/`, `/blog/<slug>/` (published posts only), and
+  every 404. RSS, the sitemap and `/api/*` do not.
+- **Markdown body:** YAML frontmatter, `# Title`, the superseded banner as a
+  blockquote when there is one, then the post as stored — corrections stay as
+  `~~old~~ new`. Only site-relative link targets are rewritten to absolute URLs.
+- **Headers:** `Content-Type: text/markdown; charset=utf-8`, `Vary: Accept`,
+  `Link: <html-url>; rel="canonical"`, `X-MDF-Version: 1`, and an `ETag` computed
+  from the bytes served. HTML on the same routes carries `Vary: Accept`,
+  `X-MDF-Version` and its own ETag, so one representation's tag can never 304
+  the other. `HEAD` mirrors `GET`.
+- **Logging:** one line per markdown response on stdout
+  (`[mdf] <iso> path=<path> status=<n> ua="<first 200 chars>"`). No IPs, no
+  query strings.
+- **Discovery:** `/llms.txt` and `/mdf.json` are runtime routes built from the
+  published posts. `/mdf.json` is a free-only MDF 0.3.1 capability document:
+  `pricing.default.rails` is empty, there are no priced sections and no auth
+  endpoint.
+
+A missing or draft slug is a real **404 at its own URL** — no redirect to
+`/404` — with the not-found page as HTML or a short markdown "Not found" when
+markdown was negotiated.
+
+Validate a running instance (or the live site) with
+[`mdf-validator`](https://github.com/bitcryptic-gw/mdf-validator):
+
+```sh
+mdf-validate --check-headers https://blog.bitcryptic.com
+```
+
 ## The manual hook: `POST /api/deploy`
 
 The sync loop is the normal path. The hook exists for "I want it now".

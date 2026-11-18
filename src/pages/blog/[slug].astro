@@ -15,7 +15,13 @@ for (const { file, message } of skipped) console.warn(`[content] skipping ${file
 
 const post = posts.find(p => p.slug === slug);
 
-if (!post) return Astro.redirect('/404');
+// An unknown or draft slug is a real 404 at its own URL: no redirect, which
+// crawlers read as a soft 404. The page body is the existing not-found page,
+// and the middleware serves its markdown counterpart when one was negotiated.
+if (!post) {
+  Astro.response.status = 404;
+  return Astro.rewrite('/404');
+}
 
 const contentHtml = await marked(post.content);
 ---
