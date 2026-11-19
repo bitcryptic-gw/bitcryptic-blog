@@ -133,18 +133,54 @@ Read-only JSON, also tailnet-only by the same proxy rule, for Kuma:
   "last_result": "updated",
   "message": "published d8e561d…",
   "errors": [],
-  "interval_seconds": 60
+  "last_alerted_sha": null,
+  "interval_seconds": 60,
+  "consecutive_failures": 0,
+  "failing_since": null,
+  "last_error": null,
+  "last_alert_at": null,
+  "alert_streak": false,
+  "child_processes": 0
 }
 ```
 
 `503 {"status":"unknown"}` before the loop has written one. Healthy means
-`last_checked` is recent and `last_result` is `no-change` or `updated`; a monitor
-should also alarm on `rejected` or `error`.
+`last_checked` is recent, `last_result` is `no-change` or `updated`, and
+`consecutive_failures` is 0; a monitor should also alarm on `rejected` or
+`error`, and on `child_processes` above 0 (see below).
+
+The alerting fields (`consecutive_failures`, `failing_since`, `last_error`,
+`last_alert_at`, `alert_streak`) are the persisted state of the fetch-failure
+alerting rule, so you can read them to see whether the loop is having a blip or
+a real outage. `last_error` is git's stderr, trimmed to 500 characters, with any
+userinfo stripped from URL-like text.
+
+### `child_processes`
+
+The number of children the sync process still has — live or zombie — sampled
+after each cycle. It should be **0**. A zombie is invisible to `docker top` and
+to `cgroup.procs` but still counts against the container's `pids.max`, so this
+field (and `/sys/fs/cgroup/pids.current`) is how a leak is caught before
+`fork()` starts failing with EAGAIN. Web Hosting #65 was exactly that: about
+2,000 zombies — git's detached post-fetch maintenance, reparented to a node
+process that was PID 1 — filled a 2,048-pid budget. `null` where `/proc` is
+unavailable (e.g. a macOS dev machine).
+
+### Alerts
+
+- **Validation rejection:** one alert per bad SHA, as before.
+- **Operational failure** (fetch, staging, reset, dirty clone): nothing for the
+  first two in a row, one alert on the third, then at most one reminder an hour
+  while it keeps failing, and one recovery notice when a fetch succeeds again.
+  The state lives in the status file, so restarting the container neither
+  re-alerts nor forgets a streak.
 
 ## Containers and modes
 
 Two containers, **one image**, both mounting the same content clone. The image
 decides what it is from **`BLOG_MODE`** — never from a template command field.
+Both modes run under `tini` as PID 1 (see `scripts/start.sh`), so a git child
+that outlives its parent is reaped instead of becoming a permanent zombie.
 
 | | web | sync |
 |---|---|---|
@@ -214,14 +250,15 @@ it for `/api/sync-status`. That directory must be shared between them.
 
 Environment for the sync container: `BLOG_MODE=sync` plus `CONTENT_DIR`
 (default `/app/src/content/blog`), `SYNC_REMOTE`/`SYNC_BRANCH` (default
-`origin`/`main`), `SYNC_INTERVAL_SECONDS` (60), `SYNC_STATUS_FILE`, `NTFY_URL`
+`origin`/`main`), `SYNC_INTERVAL_SECONDS` (60), `SYNC_GIT_TIMEOUT_MS` (60000,
+the per-git-call timeout), `SYNC_STATUS_FILE`, `NTFY_URL`
 (full topic URL) and `NTFY_TOKEN_FILE`. **No secret is ever logged**, and the
 loop refuses to start if a configured secret file is missing or empty.
 
 ## Tests
 
 ```sh
-npm test                                   # 26 unit tests: validator, loader, sync decisions, secrets
+npm test                                   # unit + HTTP tests, incl. the leak probes
 
 # in-image: mode selection, and the hook/status routes with a real clone mounted
 docker run --rm --platform linux/amd64 <image> sh tests/modes.test.sh
@@ -229,6 +266,39 @@ docker run --rm --platform linux/amd64 \
   -v <content-clone>:/app/src/content/blog -v <status-dir>:/app/data \
   <image> sh tests/hook.test.sh
 ```
+
+`tests/zombie-leak.test.mjs` drives 200 real sync cycles and 200 `/api/deploy`
+requests, mixing successes, rejecting merges, fetch failures and forced
+timeouts (`tests/helpers/fake-git` hangs on `fetch` while a marker file
+exists), then asserts the process that did the work has no children left — live
+or zombie.
+
+### Running the leak probes
+
+`npm test` covers the direct-child paths. Two shapes matter beyond that, and
+both are one command in the image:
+
+```sh
+# the probe itself as PID 1, i.e. the shape of a node process with no init:
+docker run --rm --platform linux/amd64 --entrypoint node <image> \
+  tests/helpers/zombie-probe.mjs
+
+# the production shape, tini as PID 1 reaping anything git daemonises:
+docker run --rm --platform linux/amd64 --entrypoint tini <image> -g -- \
+  node tests/helpers/zombie-probe.mjs
+```
+
+Both print one JSON line; `childrenAtEnd`, `zombiesAtEnd` and
+`orphanZombiesDelta` must all be 0, and `--clean` (only cycles that can succeed)
+is the shape to look at. The second is the one that matters: it is how the
+container actually runs. `orphanZombiesDelta` counts zombies reparented to PID 1,
+so it is only meaningful when that PID 1 is an init — in the first shape they
+are the probe's own children, in the second tini reaps them.
+
+The pre-#65 image fails both: 60 leftover `git` children after 60 cycles with no
+init, and one zombie per successful fetch at PID 1. Append `/api/deploy`'s
+equivalent with `tests/helpers/deploy-zombie-probe.mjs` (it needs `dist/`, so use
+the image).
 
 `tests/modes.test.sh` starts each mode and reads `/proc/<pid>/cmdline` to prove
 which process was selected, including with a stray argv appended (the shape the
@@ -242,13 +312,11 @@ container before it listens.
   non-fast-forward).
 - App: redeploy the previous image tag. Tags are dated (`:2026-11-15`); the
   previous `latest` digest is recorded in the libby record for each release.
-- A dirty live content clone is **never** reset over: the loop alerts and skips
-  until it is clean.
+- A dirty live content clone is **never** reset over: the loop alerts (after
+  three consecutive cycles) and skips until it is clean.
 
 ## Known gaps
 
 - Branch protection on the content repo is not yet enabled; merges are currently
   not enforced as the approval step (tracked in Web Hosting Fleet #63, with the
   bot-identity proposal).
-- `bc-gold` / `bc-gold-dim` are used in the templates but are not defined in
-  `tailwind.config.mjs`, so those classes render unstyled.

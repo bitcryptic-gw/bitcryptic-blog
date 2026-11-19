@@ -2,7 +2,9 @@ FROM node:22-alpine
 
 WORKDIR /app
 
-RUN apk add --no-cache git
+# git for the sync loop; tini so that PID 1 reaps the children git orphans
+# instead of node having to (see scripts/start.sh).
+RUN apk add --no-cache git tini
 
 COPY package*.json ./
 RUN npm ci --legacy-peer-deps

@@ -1,0 +1,17 @@
+#!/bin/sh
+# A `git` for the leak tests. Everything is delegated to the real binary except
+# a prune-fetch while FAKE_GIT_SLEEP_MARKER names an existing file: then it
+# hangs, so the sync loop's timeout path runs. It hangs before doing any work,
+# so a killed fetch never leaves a half-written ref or lock behind.
+#
+# Matching on `fetch --prune` rather than `$1` because the sync code puts
+# `-c key=value` pairs in front of the subcommand.
+case " $* " in
+  *" fetch --prune "*)
+    if [ -n "${FAKE_GIT_SLEEP_MARKER:-}" ] && [ -f "$FAKE_GIT_SLEEP_MARKER" ]; then
+      sleep 30
+      exit 0
+    fi
+    ;;
+esac
+exec "${REAL_GIT:?REAL_GIT must point at the real git}" "$@"

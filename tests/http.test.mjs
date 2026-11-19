@@ -7,13 +7,12 @@
  */
 import assert from 'node:assert/strict';
 import test, { after, before } from 'node:test';
-import { execFileSync, spawn } from 'node:child_process';
-import fs from 'node:fs';
+import { spawn } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { ENTRY, ensureBuilt } from './helpers/build.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const ENTRY = path.join(ROOT, 'dist/server/entry.mjs');
 const FIXTURES = path.join(ROOT, 'tests/fixtures/content');
 const PORT = 4500 + (process.pid % 400);
 const BASE = `http://127.0.0.1:${PORT}`;
@@ -25,9 +24,7 @@ const AGENT_ACCEPT = 'text/markdown, text/html';
 let server;
 
 before(async () => {
-  if (!fs.existsSync(ENTRY)) {
-    execFileSync('npm', ['run', 'build'], { cwd: ROOT, stdio: 'inherit' });
-  }
+  await ensureBuilt();
 
   server = spawn(process.execPath, [ENTRY], {
     cwd: ROOT,
