@@ -15,6 +15,10 @@ export default {
           cyan:       '#00CDFE',
           'cyan-dim': '#0099cc',
           blue:       '#0058F2',
+          // Same gold the prose styles already use in src/styles/global.css
+          // (links, inline code, blockquote rule); the dim tone is its border.
+          gold:       '#c9a84c',
+          'gold-dim': '#8a6f2e',
         },
       },
       fontFamily: {

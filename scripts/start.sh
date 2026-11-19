@@ -38,8 +38,18 @@ echo "[start] mode=$MODE"
 # or empty. Never prints a secret value.
 node scripts/check-secrets.mjs "$MODE"
 
-# exec keeps the node process as PID 1 so it receives SIGTERM from `docker stop`.
+# tini, not node, is PID 1.
+#
+# Web Hosting #65: git daemonises some of its work (post-fetch maintenance) and,
+# on a failed fetch, exits while its transport helper is still finishing. Node
+# cannot reap a child it did not spawn, so as PID 1 it accumulated those as
+# zombies charged to the container's pids.max until fork() failed. tini reaps
+# them. `-g` also forwards SIGTERM to the process group, so a hung git dies with
+# the container instead of keeping node waiting for its timeout.
+#
+# scripts/sync.mjs separately stops git from forking the maintenance daemon at
+# all; both layers are deliberate.
 case "$MODE" in
-  web)  exec node ./dist/server/entry.mjs ;;
-  sync) exec node scripts/sync.mjs ;;
+  web)  exec tini -g -- node ./dist/server/entry.mjs ;;
+  sync) exec tini -g -- node scripts/sync.mjs ;;
 esac
