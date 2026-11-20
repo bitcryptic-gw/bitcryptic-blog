@@ -1,0 +1,24 @@
+---
+/**
+ * `/` for a site without a home page: its post index.
+ *
+ * See src/site/Post.astro for why the branches are literal components rather
+ * than a lookup.
+ */
+import BlogIndex from '../themes/blog/Index.astro';
+
+interface Props {
+  posts: any[];
+  site: any;
+}
+
+const { posts, site } = Astro.props;
+---
+
+{site.theme === 'blog' ? (
+  <BlogIndex posts={posts} site={site} />
+) : (
+  // A theme with no post index and no home page has nothing to show at `/`.
+  // The route turns this into the not-found page.
+  <Fragment />
+)}

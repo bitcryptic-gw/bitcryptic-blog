@@ -1,0 +1,35 @@
+---
+/**
+ * Theme dispatch.
+ *
+ * Why this exists instead of `const Post = themeComponents(config.theme).Post`:
+ * Astro works out a route's stylesheets at build time by walking the components
+ * the route *statically* renders. Choose a component through a variable and it
+ * can no longer attribute their CSS to the page, so it falls back to one merged
+ * stylesheet for everything — which changes the blog's `<link>` tags. Keeping
+ * every branch a literal `<Component />` keeps the blog's style graph exactly
+ * what it was, which is what the byte-identity gate checks.
+ *
+ * Adding a theme means adding its components and one branch to each of these
+ * four files.
+ */
+import BlogPost from '../themes/blog/Post.astro';
+import MarkdownfirstPost from '../themes/markdownfirst/Post.astro';
+
+interface Props {
+  post: any;
+  site: any;
+}
+
+const { post, site } = Astro.props;
+---
+
+{site.theme === 'markdownfirst' ? (
+  <MarkdownfirstPost post={post} site={site}>
+    <slot />
+  </MarkdownfirstPost>
+) : (
+  <BlogPost post={post} site={site}>
+    <slot />
+  </BlogPost>
+)}

@@ -1,0 +1,22 @@
+---
+/**
+ * The not-found page, in the site's theme.
+ *
+ * See src/site/Post.astro for why the branches are literal components rather
+ * than a lookup.
+ */
+import BlogNotFound from '../themes/blog/NotFound.astro';
+import MarkdownfirstNotFound from '../themes/markdownfirst/NotFound.astro';
+
+interface Props {
+  site: any;
+}
+
+const { site } = Astro.props;
+---
+
+{site.theme === 'markdownfirst' ? (
+  <MarkdownfirstNotFound site={site} />
+) : (
+  <BlogNotFound site={site} />
+)}

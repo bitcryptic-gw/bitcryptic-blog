@@ -1,8 +1,9 @@
 ---
-import Base from '../layouts/Base.astro';
-import NotFound from '../components/NotFound.astro';
+export const prerender = false;
+import SiteNotFound from '../site/NotFound.astro';
+import { getSite } from '../lib/site.mjs';
+
+const site = getSite();
 ---
 
-<Base title="Not Found">
-  <NotFound />
-</Base>
+<SiteNotFound site={site.config} />

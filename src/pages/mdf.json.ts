@@ -1,20 +1,27 @@
 export const prerender = false;
 import type { APIRoute } from 'astro';
-import { SITE_URL } from '../lib/mdf.js';
+import { getSite } from '../lib/site.mjs';
 
 /**
  * `/mdf.json` — the MDF 0.3.1 capability document.
  *
- * The blog's content is free: the default price entry carries an empty `rails`
- * list, which the spec defines as open access. No section is priced, there is
- * no auth endpoint, and no payment rail is offered — a free-only site in the
- * spec's own terms, with nothing invented to satisfy a paid-tier shape.
+ * Every site this image serves is free-only: the default price entry carries an
+ * empty `rails` list, which the spec defines as open access. No section is
+ * priced, there is no auth endpoint, and no payment rail is offered. This is not
+ * configurable — `site.json` rejects a `pricing` field — so a content change
+ * cannot quietly turn a free site into a paid one.
+ *
+ * `name`, `contact` and the origin come from the site config; the defaults are
+ * the blog's.
  */
 export const GET: APIRoute = () => {
+  const { config } = getSite();
+  const origin = config.origin;
+
   const doc = {
     mdf_version: '0.3.1',
-    site: SITE_URL,
-    name: 'BitCryptic Blog',
+    site: origin,
+    name: config.mdf.name,
     pricing: {
       default: { rails: [] },
     },
@@ -30,11 +37,11 @@ export const GET: APIRoute = () => {
       math: false,
     },
     feed: {
-      url: `${SITE_URL}/rss.xml`,
+      url: `${origin}/rss.xml`,
       format: 'rss2',
     },
-    llms_txt: `${SITE_URL}/llms.txt`,
-    contact: 'https://bitcryptic.com',
+    llms_txt: `${origin}/llms.txt`,
+    contact: config.mdf.contact,
   };
 
   return new Response(`${JSON.stringify(doc, null, 2)}\n`, {

@@ -1,0 +1,22 @@
+---
+/**
+ * The plain page layout: a heading, prose, and the theme's hand-drawn box
+ * styles. Deliberately one column, so a long page stays readable at 390 px.
+ */
+import Base from './Base.astro';
+
+interface Props {
+  page: any;
+  site: any;
+}
+
+const { page, site } = Astro.props;
+---
+
+<Base title={page.title} description={page.description} site={site}>
+  <article class="mdf-prose">
+    <h1 class="mdf-page-title">{page.title}</h1>
+    {page.description && <p class="mdf-lead">{page.description}</p>}
+    <slot />
+  </article>
+</Base>

@@ -1,0 +1,314 @@
+{
+  "GET / [html]": {
+    "status": 200,
+    "headers": {
+      "content-type": "text/html",
+      "vary": "Accept",
+      "x-mdf-version": "1",
+      "link": null,
+      "cache-control": null
+    },
+    "sha256": "4871fa35803e5d40923150548c9054dcfa7c252bd990420cef334d96cf04c4b9",
+    "bytes": 4296
+  },
+  "GET / [md]": {
+    "status": 200,
+    "headers": {
+      "content-type": "text/markdown; charset=utf-8",
+      "vary": "Accept",
+      "x-mdf-version": "1",
+      "link": "<https://blog.bitcryptic.com/>; rel=\"canonical\"",
+      "cache-control": null
+    },
+    "sha256": "11a2b131b92f9e67d2561908087b2650bdda48839e58d5eb53bf07dc06b96e64",
+    "bytes": 353
+  },
+  "GET /blog/published-post/ [html]": {
+    "status": 200,
+    "headers": {
+      "content-type": "text/html",
+      "vary": "Accept",
+      "x-mdf-version": "1",
+      "link": null,
+      "cache-control": null
+    },
+    "sha256": "d3a8b9e7d00c4df4e11962d95061da232ec003ada7708ab1a992b181e7813394",
+    "bytes": 3552
+  },
+  "GET /blog/published-post/ [md]": {
+    "status": 200,
+    "headers": {
+      "content-type": "text/markdown; charset=utf-8",
+      "vary": "Accept",
+      "x-mdf-version": "1",
+      "link": "<https://blog.bitcryptic.com/blog/published-post/>; rel=\"canonical\"",
+      "cache-control": null
+    },
+    "sha256": "f9fbf222dae92f01839eb99149f02140fb607bb63736e64b4cfc1c222ffb24de",
+    "bytes": 372
+  },
+  "GET /blog/superseded-post/ [html]": {
+    "status": 200,
+    "headers": {
+      "content-type": "text/html",
+      "vary": "Accept",
+      "x-mdf-version": "1",
+      "link": null,
+      "cache-control": null
+    },
+    "sha256": "05e38da250081abdb9ee16915febd4e41c8bdbacb0c90142d60a2d02d2c567f2",
+    "bytes": 3711
+  },
+  "GET /blog/superseded-post/ [md]": {
+    "status": 200,
+    "headers": {
+      "content-type": "text/markdown; charset=utf-8",
+      "vary": "Accept",
+      "x-mdf-version": "1",
+      "link": "<https://blog.bitcryptic.com/blog/superseded-post/>; rel=\"canonical\"",
+      "cache-control": null
+    },
+    "sha256": "fe31a88a2dbc2ad785e145193e8f9b9723552bb53f39565a8b75607719a2c458",
+    "bytes": 528
+  },
+  "GET /404 [html]": {
+    "status": 404,
+    "headers": {
+      "content-type": "text/html",
+      "vary": "Accept",
+      "x-mdf-version": "1",
+      "link": null,
+      "cache-control": null
+    },
+    "sha256": "8ea62791cb4ab38472c3272b2734cef9cbf35b37de2c4c91a830b1b94a43f875",
+    "bytes": 2600
+  },
+  "GET /404 [md]": {
+    "status": 404,
+    "headers": {
+      "content-type": "text/markdown; charset=utf-8",
+      "vary": "Accept",
+      "x-mdf-version": "1",
+      "link": null,
+      "cache-control": null
+    },
+    "sha256": "e64385ebaae40a41b9fe3435e1ead18745dd3efda57e1b6fee167762e373cff4",
+    "bytes": 124
+  },
+  "GET /404/ [html]": {
+    "status": 404,
+    "headers": {
+      "content-type": "text/html",
+      "vary": "Accept",
+      "x-mdf-version": "1",
+      "link": null,
+      "cache-control": null
+    },
+    "sha256": "c02045c58d7092eeb7ce3b8d1aad9baca414306c0ae0ed1e27e9fc1428689f8b",
+    "bytes": 2601
+  },
+  "GET /404/ [md]": {
+    "status": 404,
+    "headers": {
+      "content-type": "text/markdown; charset=utf-8",
+      "vary": "Accept",
+      "x-mdf-version": "1",
+      "link": null,
+      "cache-control": null
+    },
+    "sha256": "e64385ebaae40a41b9fe3435e1ead18745dd3efda57e1b6fee167762e373cff4",
+    "bytes": 124
+  },
+  "GET /nope [html]": {
+    "status": 404,
+    "headers": {
+      "content-type": "text/html",
+      "vary": "Accept",
+      "x-mdf-version": "1",
+      "link": null,
+      "cache-control": null
+    },
+    "sha256": "c0e45f783017d6907966911ece9b5f0bba797b86f523bfb004fea3f87c9eacf6",
+    "bytes": 2601
+  },
+  "GET /nope [md]": {
+    "status": 404,
+    "headers": {
+      "content-type": "text/markdown; charset=utf-8",
+      "vary": "Accept",
+      "x-mdf-version": "1",
+      "link": null,
+      "cache-control": null
+    },
+    "sha256": "e64385ebaae40a41b9fe3435e1ead18745dd3efda57e1b6fee167762e373cff4",
+    "bytes": 124
+  },
+  "GET /nope/deeper/ [html]": {
+    "status": 404,
+    "headers": {
+      "content-type": "text/html",
+      "vary": "Accept",
+      "x-mdf-version": "1",
+      "link": null,
+      "cache-control": null
+    },
+    "sha256": "37cf61592f475caa22e86470b0279c94e0b8e5ea864e16dd69f11d7934a8d0c2",
+    "bytes": 2609
+  },
+  "GET /nope/deeper/ [md]": {
+    "status": 404,
+    "headers": {
+      "content-type": "text/markdown; charset=utf-8",
+      "vary": "Accept",
+      "x-mdf-version": "1",
+      "link": null,
+      "cache-control": null
+    },
+    "sha256": "e64385ebaae40a41b9fe3435e1ead18745dd3efda57e1b6fee167762e373cff4",
+    "bytes": 124
+  },
+  "GET /blog/nope/ [html]": {
+    "status": 404,
+    "headers": {
+      "content-type": "text/html",
+      "vary": "Accept",
+      "x-mdf-version": "1",
+      "link": null,
+      "cache-control": null
+    },
+    "sha256": "8ea62791cb4ab38472c3272b2734cef9cbf35b37de2c4c91a830b1b94a43f875",
+    "bytes": 2600
+  },
+  "GET /blog/nope/ [md]": {
+    "status": 404,
+    "headers": {
+      "content-type": "text/markdown; charset=utf-8",
+      "vary": "Accept",
+      "x-mdf-version": "1",
+      "link": null,
+      "cache-control": null
+    },
+    "sha256": "e64385ebaae40a41b9fe3435e1ead18745dd3efda57e1b6fee167762e373cff4",
+    "bytes": 124
+  },
+  "GET /rss.xml [html]": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/xml",
+      "vary": null,
+      "x-mdf-version": null,
+      "link": null,
+      "cache-control": null
+    },
+    "sha256": "f2291f0cac51d57f33a7621e55f3b2d7db0193e0f69090456934007e9d9e7331",
+    "bytes": 938
+  },
+  "GET /rss.xml [md]": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/xml",
+      "vary": null,
+      "x-mdf-version": null,
+      "link": null,
+      "cache-control": null
+    },
+    "sha256": "f2291f0cac51d57f33a7621e55f3b2d7db0193e0f69090456934007e9d9e7331",
+    "bytes": 938
+  },
+  "GET /sitemap.xml [html]": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/xml; charset=utf-8",
+      "vary": null,
+      "x-mdf-version": null,
+      "link": null,
+      "cache-control": "public, max-age=3600"
+    },
+    "sha256": "e5a2920d40522dd9574fd9e7637495eeaccd671f91e02db71a4cfb233813e7d4",
+    "bytes": 476
+  },
+  "GET /sitemap.xml [md]": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/xml; charset=utf-8",
+      "vary": null,
+      "x-mdf-version": null,
+      "link": null,
+      "cache-control": "public, max-age=3600"
+    },
+    "sha256": "e5a2920d40522dd9574fd9e7637495eeaccd671f91e02db71a4cfb233813e7d4",
+    "bytes": 476
+  },
+  "GET /robots.txt [html]": {
+    "status": 200,
+    "headers": {
+      "content-type": "text/plain; charset=utf-8",
+      "vary": null,
+      "x-mdf-version": null,
+      "link": null,
+      "cache-control": null
+    },
+    "sha256": "9851b47f32d026e94aae2d4b40d453efc52b13c68a8fe3636fbea159bab7ef54",
+    "bytes": 72
+  },
+  "GET /robots.txt [md]": {
+    "status": 200,
+    "headers": {
+      "content-type": "text/plain; charset=utf-8",
+      "vary": null,
+      "x-mdf-version": null,
+      "link": null,
+      "cache-control": null
+    },
+    "sha256": "9851b47f32d026e94aae2d4b40d453efc52b13c68a8fe3636fbea159bab7ef54",
+    "bytes": 72
+  },
+  "GET /llms.txt [html]": {
+    "status": 200,
+    "headers": {
+      "content-type": "text/plain; charset=utf-8",
+      "vary": null,
+      "x-mdf-version": "1",
+      "link": null,
+      "cache-control": null
+    },
+    "sha256": "42bd162e0b604ae331ca885451deac19d73b29b945049e13f2c3ed6e3912c896",
+    "bytes": 1068
+  },
+  "GET /llms.txt [md]": {
+    "status": 200,
+    "headers": {
+      "content-type": "text/plain; charset=utf-8",
+      "vary": null,
+      "x-mdf-version": "1",
+      "link": null,
+      "cache-control": null
+    },
+    "sha256": "42bd162e0b604ae331ca885451deac19d73b29b945049e13f2c3ed6e3912c896",
+    "bytes": 1068
+  },
+  "GET /mdf.json [html]": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8",
+      "vary": null,
+      "x-mdf-version": "1",
+      "link": null,
+      "cache-control": null
+    },
+    "sha256": "1d5d00d4e5134705f883e6eebd42c9dbd2a4988b7ce5a1f3386278659487bd61",
+    "bytes": 543
+  },
+  "GET /mdf.json [md]": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8",
+      "vary": null,
+      "x-mdf-version": "1",
+      "link": null,
+      "cache-control": null
+    },
+    "sha256": "1d5d00d4e5134705f883e6eebd42c9dbd2a4988b7ce5a1f3386278659487bd61",
+    "bytes": 543
+  }
+}

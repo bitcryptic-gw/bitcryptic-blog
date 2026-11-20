@@ -1,14 +1,31 @@
 ---
-import '../styles/global.css';
+/**
+ * The blog's document shell — the default theme, and the blog as it has always
+ * looked. Every value that used to be hard-coded here is now read from the site
+ * config, whose defaults *are* those hard-coded values; with the blog's content
+ * repo and no `site.json`, this renders byte-for-byte what it rendered before
+ * the site image was generalised.
+ */
+import '../../styles/global.css';
+import { pageTitle } from '../../lib/site-config.mjs';
 
 interface Props {
   title: string;
   description?: string;
   ogType?: 'website' | 'article';
+  site: any;
 }
 
-const { title, description = 'Crypto-native AI infrastructure, DePIN compute, and self-hosted systems.', ogType = 'website' } = Astro.props;
-const canonicalURL = new URL(Astro.url.pathname, Astro.site);
+const {
+  title,
+  description,
+  ogType = 'website',
+  site: config,
+} = Astro.props;
+
+const metaDescription = description ?? config.description;
+const canonicalURL = new URL(Astro.url.pathname, config.origin);
+const nav = config.nav ?? [];
 ---
 
 <!DOCTYPE html>
@@ -16,16 +33,18 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content={description} />
+  <meta name="description" content={metaDescription} />
   <meta property="og:type" content={ogType} />
   <meta property="og:title" content={title} />
-  <meta property="og:description" content={description} />
-  <meta property="og:site_name" content="BitCryptic" />
+  <meta property="og:description" content={metaDescription} />
+  <meta property="og:site_name" content={config.shortName} />
   <link rel="canonical" href={canonicalURL} />
-  <link rel="alternate" type="application/rss+xml" title="BitCryptic Blog" href="/rss.xml" />
-  <title>{title} — BitCryptic</title>
+  <link rel="alternate" type="application/rss+xml" title={config.name} href="/rss.xml" />
+  <title>{pageTitle(config, title)}</title>
   <!-- BitCryptic Blog — Umami analytics -->
-  <script defer src="https://webstats.bitcryptic.com/script.js" data-website-id="d183ecc5-3e7d-4a80-a70a-32fc1ba800c1"></script>
+  {config.umami && (
+    <script defer src={config.umami.scriptUrl} data-website-id={config.umami.websiteId}></script>
+  )}
 </head>
 <body class="min-h-screen bg-bc-black text-bc-text text-lg">
 
@@ -44,7 +63,13 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
           <path d="M6.18 15.64a2.18 2.18 0 0 1 2.18 2.18C8.36 19.01 7.38 20 6.18 20C4.98 20 4 19.01 4 17.82a2.18 2.18 0 0 1 2.18-2.18M4 4.44A15.56 15.56 0 0 1 19.56 20h-2.83A12.73 12.73 0 0 0 4 7.27V4.44m0 5.66a9.9 9.9 0 0 1 9.9 9.9h-2.83A7.07 7.07 0 0 0 4 12.93V10.1z"/>
         </svg>
       </a>
-    </div>
+    </div>{nav.length > 0 && (
+      <nav aria-label="Main" class="max-w-3xl mx-auto px-6 flex flex-wrap gap-6 font-mono text-sm">
+        {nav.map(item => (
+          <a href={item.path} class="text-bc-muted hover:text-bc-cyan transition-colors">{item.label}</a>
+        ))}
+      </nav>
+    )}
   </header>
 
   <main class="max-w-3xl mx-auto px-6 py-12">
@@ -53,8 +78,8 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
 
   <footer class="border-t border-bc-border mt-24">
     <div class="max-w-3xl mx-auto px-6 py-8 flex items-center justify-between text-bc-muted text-sm font-mono">
-      <span>BitCryptic™</span>
-      <span>Sydney, NSW · Self-hosted</span>
+      <span>{config.footer.left}</span>
+      <span>{config.footer.right}</span>
     </div>
   </footer>
 

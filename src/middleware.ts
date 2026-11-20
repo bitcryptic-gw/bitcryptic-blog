@@ -1,40 +1,33 @@
 /**
- * MDF content negotiation for the blog.
+ * MDF content negotiation for the site.
  *
- * `Accept: text/markdown` at `/` and `/blog/<slug>/` returns markdown at the
- * same URL; everything else gets the HTML it always got. The same URLs also
- * carry `Vary: Accept` and a per-representation ETag on the HTML side, so a
- * cache never hands a markdown body to a browser (or the reverse).
+ * `Accept: text/markdown` at `/`, `/blog/<slug>/` and any page URL returns
+ * markdown at the same URL; everything else gets the HTML it always got. The
+ * same URLs also carry `Vary: Accept` and a per-representation ETag on the HTML
+ * side, so a cache never hands a markdown body to a browser (or the reverse).
  *
  * Unknown paths and unknown/draft slugs are a real 404 at the requested URL —
- * an agent gets a short markdown "Not found", a browser gets the existing
+ * an agent gets a short markdown "Not found", a browser gets the theme's
  * not-found page, and neither is redirected.
  */
 import { defineMiddleware } from 'astro:middleware';
 import { negotiate } from './lib/negotiate.js';
-import { MDF_HEADERS, SITE_URL } from './lib/mdf.js';
+import { MDF_HEADERS } from './lib/mdf.js';
 import {
   indexMarkdown,
   markdownLogLine,
   notFoundMarkdown,
   postHtmlUrl,
   postMarkdown,
-  type MarkdownPost,
 } from './lib/markdown-content.js';
+import { pageHtmlUrl, pageMarkdown } from './lib/page-markdown.js';
+import { pageFileExists, slugFromPath } from './lib/pages.mjs';
+import { contentDir, getSite, homePage, pageBySlug } from './lib/site.mjs';
 import { etagFor, ifNoneMatchMatches } from './lib/etag.js';
-import { loadPosts } from '../scripts/validate-content.mjs';
 
 const POST_PATH = /^\/blog\/([^/]+)\/?$/;
 
 const MARKDOWN_TYPE = 'text/markdown; charset=utf-8';
-
-function contentDir(): string {
-  return process.env.CONTENT_DIR ?? '/app/src/content/blog';
-}
-
-function loadMarkdownPosts(): MarkdownPost[] {
-  return loadPosts(contentDir()).posts as MarkdownPost[];
-}
 
 /** A markdown response with the headers an MDF agent expects. */
 function markdownResponse(
@@ -83,6 +76,17 @@ async function finaliseHtml(response: Response, request: Request): Promise<Respo
   return new Response(body, { status: response.status, headers });
 }
 
+/** The markdown document for a path that is a page, or null. */
+function pageMarkdownFor(site: any, slug: string | null): { body: string, url: string } | null {
+  if (slug === null) return null;
+  if (slug === '') {
+    const home = homePage(site);
+    return home ? { body: pageMarkdown(home, site.config), url: pageHtmlUrl(site.config.origin, '') } : null;
+  }
+  const page = pageBySlug(site, slug);
+  return page ? { body: pageMarkdown(page, site.config), url: pageHtmlUrl(site.config.origin, page.slug) } : null;
+}
+
 export const onRequest = defineMiddleware(async (context, next) => {
   const pathname = new URL(context.request.url).pathname;
   const method = context.request.method;
@@ -90,7 +94,13 @@ export const onRequest = defineMiddleware(async (context, next) => {
     (method === 'GET' || method === 'HEAD') &&
     negotiate(context.request.headers.get('accept')) === 'markdown';
   const postMatch = pathname.match(POST_PATH);
-  const isContentRoute = pathname === '/' || postMatch !== null;
+  const pageSlug = slugFromPath(pathname);
+
+  let site: any = null;
+  const getCachedSite = () => {
+    if (!site) site = getSite();
+    return site;
+  };
 
   if (wantMarkdown) {
     const ifNoneMatch = context.request.headers.get('if-none-match');
@@ -98,20 +108,41 @@ export const onRequest = defineMiddleware(async (context, next) => {
 
     try {
       if (pathname === '/') {
-        const body = indexMarkdown(loadMarkdownPosts());
+        const loaded = getCachedSite();
+        // A site with a home page serves that page's markdown body, which is
+        // the whole designed page in plain text. A site without one is the
+        // blog, and its index markdown is what it has always been.
+        const pageDoc = pageMarkdownFor(loaded, '');
+        if (pageDoc) {
+          console.log(markdownLogLine(pathname, 200, userAgent));
+          return markdownResponse(pageDoc.body, 200, pageDoc.url, ifNoneMatch);
+        }
+        const body = indexMarkdown(loaded.posts, loaded.config);
         console.log(markdownLogLine(pathname, 200, userAgent));
-        return markdownResponse(body, 200, `${SITE_URL}/`, ifNoneMatch);
+        return markdownResponse(body, 200, `${loaded.config.origin}/`, ifNoneMatch);
       }
 
       if (postMatch) {
         const slug = decodeURIComponent(postMatch[1]);
-        const post = loadMarkdownPosts().find(p => p.slug === slug);
+        const post = getCachedSite().posts.find(p => p.slug === slug);
         if (post) {
+          const loaded = getCachedSite();
           console.log(markdownLogLine(pathname, 200, userAgent));
-          return markdownResponse(postMarkdown(post), 200, postHtmlUrl(post.slug), ifNoneMatch);
+          return markdownResponse(
+            postMarkdown(post, loaded.config.origin),
+            200,
+            postHtmlUrl(post.slug, loaded.config.origin),
+            ifNoneMatch
+          );
         }
         console.log(markdownLogLine(pathname, 404, userAgent));
-        return markdownResponse(notFoundMarkdown(), 404, null, ifNoneMatch);
+        return markdownResponse(notFoundMarkdown(getCachedSite().config), 404, null, ifNoneMatch);
+      }
+
+      const pageDoc = pageMarkdownFor(getCachedSite(), pageSlug);
+      if (pageDoc) {
+        console.log(markdownLogLine(pathname, 200, userAgent));
+        return markdownResponse(pageDoc.body, 200, pageDoc.url, ifNoneMatch);
       }
     } catch (error) {
       // Content not readable: fall through to the HTML route, which reports it
@@ -126,8 +157,18 @@ export const onRequest = defineMiddleware(async (context, next) => {
   // status, and the representation matches what the client asked for.
   if (wantMarkdown && response.status === 404) {
     console.log(markdownLogLine(pathname, 404, context.request.headers.get('user-agent')));
-    return markdownResponse(notFoundMarkdown(), 404, null, context.request.headers.get('if-none-match'));
+    return markdownResponse(
+      notFoundMarkdown(getCachedSite().config),
+      404,
+      null,
+      context.request.headers.get('if-none-match')
+    );
   }
+
+  const isContentRoute =
+    pathname === '/' ||
+    postMatch !== null ||
+    pageFileExists(contentDir(), pageSlug);
 
   if (isContentRoute || response.status === 404) {
     return finaliseHtml(response, context.request);

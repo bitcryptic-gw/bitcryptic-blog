@@ -1,9 +1,84 @@
 # bitcryptic-blog
 
-The Astro app behind [blog.bitcryptic.com](https://blog.bitcryptic.com). Posts live
-in a separate repo, [`bitcryptic-blog-content`](https://github.com/bitcryptic-gw/bitcryptic-blog-content),
-which is **public** and is mounted into the container as a git clone at
+The Astro app behind [blog.bitcryptic.com](https://blog.bitcryptic.com) — and, since
+2026-11-21, the one **site image** that also serves markdownfirst.com. Posts and pages
+live in a separate repo per site, mounted into the container as a git clone at
 `/app/src/content/blog`.
+
+Two sites, one image, no fork. What differs between them is the content repo and its
+`site.json`; everything hardened here — publish-on-merge, validation before publish,
+markdown negotiation, real 404s, free-only MDF, `/llms.txt`, tini and the git reaping
+fix, fetch alerting, the timing-safe deploy hook — is shared.
+
+## One image, more than one site
+
+### `site.json`, in the root of the content repo
+
+Optional, and a **missing file means exactly blog.bitcryptic.com**, field for field, so
+the blog kept working while its content repo caught up. It holds only what differs
+between sites:
+
+| field | what it sets |
+| --- | --- |
+| `name`, `shortName`, `titleTemplate` | document titles, `og:site_name`, `/llms.txt` heading |
+| `origin` | the canonical origin: `<link rel="canonical">`, sitemap, feed, `/mdf.json` |
+| `theme` | one of the themes bundled in the image (`blog`, `markdownfirst`) |
+| `content` | `{ "posts": true/false, "pages": true/false }` |
+| `nav` | `label`, `path` (`/…`, `#…` or `https://…`), `order`, optional `style: button` |
+| `description` | the default meta description |
+| `umami` | `{ "websiteId", "scriptUrl" }`, or `null` to load no analytics |
+| `footer` | the two footer spans |
+| `mdf` | `/mdf.json` name and contact |
+| `llms` | `/llms.txt` description, intro lines, site links (`{origin}` is substituted), topics |
+| `notFound` | the 404 wording, in HTML and in markdown |
+
+Infrastructure stays in environment variables and file mounts, never in the content
+repo: `BLOG_MODE`, `CONTENT_DIR`, `SYNC_STATUS_FILE`, the secret files.
+
+Validation is strict — **an unknown key is an error**, because a typo that is silently
+ignored is a config change that silently does nothing — and a bad `site.json` is held
+back by the sync loop exactly like a bad post. `mdf.pricing` is refused outright: this
+image serves free-only MDF 0.3.1 by design.
+
+### Pages, in `pages/`
+
+Undated markdown files, next to the posts (which stay at the repo root):
+
+```
+pages/index.md          slug ""      ->  /
+pages/how-it-works.md   slug how-it-works ->  /how-it-works/
+```
+
+Frontmatter: `title`, `slug`, `description`, `order`, an optional `nav` label, an
+optional `layout`, and `status`. Pages never appear in the feed. Every page
+**negotiates**: its markdown body is what an agent gets at the same URL, which is why a
+page on a custom layout still needs a real body — the validator refuses a placeholder.
+The sitemap and `/llms.txt` list pages and posts.
+
+### Themes, in `src/themes/`
+
+`blog` is the default and is the blog as it has always looked. `markdownfirst` is
+direction E: graph paper, hand-drawn boxes, self-hosted Gaegu and Nunito, a `home`
+layout for the designed home page and a plain `page` layout for everything else.
+
+A theme supplies `Base.astro`, `Post.astro`, `NotFound.astro`, `Index.astro` (a post
+index) and a `.astro` file per entry in its `pageLayouts` (`Page.astro`, `Home.astro`).
+Adding a theme means adding the directory, a line in `src/lib/themes.mjs`, and one
+branch in each of `src/site/*.astro`.
+
+The markdownfirst theme adds **no dependencies**: its fonts (Gaegu and Nunito, latin
+subsets, woff2, SIL OFL 1.1 with the licence text alongside) are vendored into
+`src/themes/markdownfirst/fonts/`, because Gary's standing preference is that a site
+serve its own fonts rather than call a Google Fonts CDN — and vendoring five files is
+lighter than a package that ships ten megabytes of subsets nobody loads. The
+illustrations are inline SVG in the theme, the layout is plain CSS, and the home page's
+copy is content, not code.
+
+Those `src/site/*.astro` dispatchers are literal `{condition ? <A/> : <B/>}` branches on
+purpose: Astro works out a route's stylesheets at build time by walking the components
+the route statically renders. Choose a component through a variable and it falls back to
+one merged stylesheet, which changes the blog's `<link>` tags — and the blog's HTML is
+checked byte for byte by `tests/byte-identity.test.mjs`.
 
 ## Publishing: merge, and it is live within a minute
 
@@ -30,8 +105,10 @@ can never 500 the site even if it somehow reaches the clone.
 ### What the validator enforces
 
 `scripts/validate-content.mjs` — one implementation, used by the sync loop, by
-every route, and by CI.
+every route, and by CI. `validateCheckout(dir)` checks `site.json`, the posts and
+`pages/` together; `validateContent()` is the post-only half.
 
+- `site.json` parses and validates (see the table above), if there is one;
 - frontmatter parses at all (a `---` file that yields no keys is a failure);
 - `title`, `slug`, `date`, `description`, `status` present and typed;
 - `date` parses; `status` is `draft` or `published`;
@@ -39,6 +116,8 @@ every route, and by CI.
 - `superseded_by`, if set, names an existing **published** slug;
 - the file name matches the slug (`a-post.md` ↔ `a-post`). Legacy file names are
   allow-listed in `LEGACY_FILE_STEMS`; new posts must match.
+- pages: the same shape minus `date`, `layout` must be one a theme actually has, the
+  slug is not a reserved route, and a page on a custom layout carries a real body;
 - files with no frontmatter (the content repo's own `README.md`) are ignored, not
   failed.
 
