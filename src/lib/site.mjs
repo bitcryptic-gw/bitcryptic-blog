@@ -14,7 +14,7 @@
  * not choose to accept.
  */
 import { loadSiteConfig, orderedNav } from './site-config.mjs';
-import { loadPages } from './pages.mjs';
+import { loadPages, navPathIsServed } from './pages.mjs';
 import { loadPosts } from '../../scripts/validate-content.mjs';
 
 export function contentDir() {
@@ -70,7 +70,17 @@ export function getSite({ dir = contentDir(), warn = true } = {}) {
 
   // The nav the site shows: whatever `site.json` spells out, in `order`; and,
   // when it spells out nothing, the published pages that carry a `nav` label.
-  const nav = orderedNav(config).length > 0 ? orderedNav(config) : derivedNav;
+  //
+  // Either way, an entry that points at a page that is not published is dropped:
+  // a draft in the menu is a 404 for every visitor who clicks it.
+  const configuredNav = orderedNav(config);
+  const nav = (configuredNav.length > 0 ? configuredNav : derivedNav).filter(item => {
+    const served = navPathIsServed(item.path, pages);
+    if (!served && warn) {
+      console.warn(`[site] nav: dropping "${item.label}" (${item.path}) — no published page at that path`);
+    }
+    return served;
+  });
 
   return {
     dir,

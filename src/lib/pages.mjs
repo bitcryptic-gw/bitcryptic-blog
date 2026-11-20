@@ -307,9 +307,33 @@ export function loadPages(dir, theme = 'blog') {
 }
 
 /**
- * The nav a site shows when its config does not spell one out: the published
- * pages that carry a `nav` label, in `order`.
+ * Is a nav entry one the site actually serves?
+ *
+ * An entry that points at a page has to point at a *published* page: a menu is
+ * a promise, and a link to a draft or a page that does not exist is a 404 in the
+ * main navigation. Entries that are not page routes — an external URL, an
+ * in-page anchor, a static file like `/rss.xml`, or a reserved route like
+ * `/blog/` — are left alone, because only a page route can be missing.
+ *
+ * @param {string} navPath
+ * @param {{ slug: string }[]} pages published pages
+ * @returns {boolean}
  */
+export function navPathIsServed(navPath, pages) {
+  if (typeof navPath !== 'string' || navPath === '') return false;
+  if (!navPath.startsWith('/')) return true; // external URL or an in-page anchor
+  if (navPath === '/') return true;
+
+  const slug = navPath.replace(/^\//, '').replace(/\/$/, '');
+  if (slug === '' || slug.includes('/')) return true; // not a page route
+  if (slug.includes('.')) return true;                 // a static file, e.g. /rss.xml
+  if (RESERVED_SLUGS.includes(slug)) return true;      // /blog/, /api/, /404
+
+  return pages.some(page => page.slug === slug);
+}
+
+/** The nav a site shows when its config does not spell one out: the published
+ * pages that carry a `nav` label, in `order`. */
 export function buildNav(pages) {
   return pages
     .filter(page => typeof page.nav === 'string' && page.nav.trim() !== '')

@@ -134,8 +134,10 @@ test('the home layout renders every section from the frontmatter', async () => {
   ]) {
     assert.ok(body.includes(text), `home page missing: ${text}`);
   }
-  // The first-adopter card is a visible placeholder, not a live claim.
-  assert.match(body, /\[First adopter: example\.org\]/);
+  // The adopter card names ProofLines, with Vasili's wording and its link.
+  assert.match(body, /prooflines\.org/);
+  assert.match(body, /ProofLines: off-node Monad network intelligence/);
+  assert.match(body, /href="https:\/\/prooflines\.org\/monad\/"/);
 });
 
 test('the nav comes from site.json, including the button style', async () => {
@@ -143,6 +145,27 @@ test('the nav comes from site.json, including the button style', async () => {
   assert.match(body, /<a href="\/about\/">About<\/a>/);
   assert.match(body, /<a href="https:\/\/mdf-demo\.example" class="mdf-nav-button">Try the demo<\/a>/);
   assert.ok(!body.includes('style="'), 'the button style comes from the config, not an inline style');
+});
+
+test('the nav drops entries that point at a draft or a missing page', async () => {
+  const body = await (await get('/', { Accept: BROWSER_ACCEPT })).text();
+  // The fixture's nav lists both: /secret/ is a draft page, /not-a-page/ exists
+  // nowhere. Neither may appear in the menu — a menu is a promise.
+  assert.ok(!body.includes('>Secret<'), 'a draft page is not in the menu');
+  assert.ok(!body.includes('>Missing<'), 'a missing page is not in the menu');
+  assert.match(body, />About</, 'a published page is still there');
+  assert.match(body, />Try the demo</, 'an external entry is untouched');
+});
+
+test('the nav keeps static, reserved and in-page entries', async () => {
+  const { navPathIsServed } = await import('../src/lib/pages.mjs');
+  const published = [{ slug: '' }, { slug: 'about' }];
+  for (const path of ['https://example.com/x', '#race', '/', '/blog/', '/api/sync-status', '/404', '/rss.xml', '/about/', '/about']) {
+    assert.equal(navPathIsServed(path, published), true, path);
+  }
+  for (const path of ['/secret/', '/not-a-page/', '/missing']) {
+    assert.equal(navPathIsServed(path, published), false, path);
+  }
 });
 
 test('ETags are per representation on a page too', async () => {

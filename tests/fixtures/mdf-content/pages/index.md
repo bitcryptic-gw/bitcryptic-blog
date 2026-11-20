@@ -84,9 +84,9 @@ running:
     - title: "demo.example"
       body: "The live demo."
       href: "https://mdf-demo.example"
-    - title: "[First adopter: example.org]"
-      body: "[Placeholder]"
-      placeholder: true
+    - title: "prooflines.org"
+      body: "ProofLines: off-node Monad network intelligence (validator geography, latency and stake concentration), sold one question at a time over x402 in native MON or USDC."
+      href: "https://prooflines.org/monad/"
 
 faq:
   heading: "Fair questions"

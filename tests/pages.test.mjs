@@ -17,6 +17,7 @@ import {
   pageFileExists,
   pagePath,
   readPagesDir,
+  navPathIsServed,
   slugFromPath,
   validatePageFields,
   validatePages,
@@ -153,6 +154,18 @@ test('nav is derived from published pages that carry a label', () => {
   ]);
   assert.deepEqual(nav.map(item => item.label), ['Spec', 'About']);
   assert.deepEqual(nav.map(item => item.path), ['/spec/', '/about/']);
+});
+
+test('a menu entry must point at something the site actually serves', () => {
+  const published = [{ slug: '' }, { slug: 'about' }];
+  // Served: external, in-page, home, reserved routes, static files, real pages.
+  for (const path of ['https://example.com/x', '#race', '/', '/blog/', '/api/x', '/404', '/rss.xml', '/about/', '/about', '/a/b/']) {
+    assert.equal(navPathIsServed(path, published), true, path);
+  }
+  // Not served: a draft page, a page that does not exist, an empty path.
+  for (const path of ['/secret/', '/missing', '', null]) {
+    assert.equal(navPathIsServed(path, published), false, String(path));
+  }
 });
 
 test('path helpers: only single-segment paths can be pages', () => {

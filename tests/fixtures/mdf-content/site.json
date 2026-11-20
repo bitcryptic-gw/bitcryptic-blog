@@ -8,6 +8,8 @@
   "content": { "posts": false, "pages": true },
   "nav": [
     { "label": "About", "path": "/about/", "order": 10 },
+    { "label": "Secret", "path": "/secret/", "order": 15 },
+    { "label": "Missing", "path": "/not-a-page/", "order": 16 },
     { "label": "Try the demo", "path": "https://mdf-demo.example", "order": 20, "style": "button" }
   ],
   "umami": null,
