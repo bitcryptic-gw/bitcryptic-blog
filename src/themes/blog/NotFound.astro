@@ -1,0 +1,24 @@
+---
+/**
+ * The blog's not-found body. Shared by the `/404` route and the dynamic routes,
+ * so an unknown slug renders the same page at its own URL with a real 404
+ * status instead of redirecting. Byte-identical to the page the blog served
+ * before the site image was generalised.
+ */
+import Base from './Base.astro';
+
+interface Props {
+  site: any;
+}
+const { site } = Astro.props;
+---
+
+<Base title="Not Found" site={site}>
+  <div class="py-24 text-center">
+    <p class="font-mono text-bc-gold text-sm tracking-widest uppercase mb-4">404</p>
+    <h1 class="font-display text-5xl text-bc-white mb-6">Post not found</h1>
+    <a href="/" class="font-mono text-sm text-bc-gold hover:text-bc-white transition-colors">
+      ← Back to all posts
+    </a>
+  </div>
+</Base>

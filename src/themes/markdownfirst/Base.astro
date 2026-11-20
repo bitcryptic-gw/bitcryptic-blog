@@ -1,0 +1,80 @@
+---
+/**
+ * markdownfirst.com's document shell — direction E.
+ *
+ * The theme's stylesheet (graph paper, hand-drawn corners, palette, and the
+ * self-hosted Gaegu/Nunito faces) is loaded as an asset by URL rather than
+ * imported into the component graph. That keeps it out of the blog theme's CSS
+ * bundle entirely: the blog never links this file, and the blog's own bytes are
+ * therefore unaffected by this theme existing in the image.
+ */
+import { pageTitle } from '../../lib/site-config.mjs';
+
+const stylesheets = import.meta.glob('./theme.css', {
+  query: '?url',
+  import: 'default',
+  eager: true,
+}) as Record<string, string>;
+const stylesheet = stylesheets['./theme.css'];
+
+interface Props {
+  title: string;
+  description?: string;
+  ogType?: 'website' | 'article';
+  site: any;
+}
+
+const { title, description, ogType = 'website', site: config } = Astro.props;
+const metaDescription = description ?? config.description;
+const canonicalURL = new URL(Astro.url.pathname, config.origin);
+const nav = config.nav ?? [];
+---
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content={metaDescription} />
+  <meta property="og:type" content={ogType} />
+  <meta property="og:title" content={pageTitle(config, title)} />
+  <meta property="og:description" content={metaDescription} />
+  <meta property="og:site_name" content={config.shortName} />
+  <link rel="canonical" href={canonicalURL} />
+  <link rel="stylesheet" href={stylesheet} />
+  <title>{pageTitle(config, title)}</title>
+  {config.umami && (
+    <script defer src={config.umami.scriptUrl} data-website-id={config.umami.websiteId}></script>
+  )}
+</head>
+<body class="mdf-body">
+  <div class="mdf-shell">
+    <nav class="mdf-nav" aria-label="Main">
+      <a class="mdf-brand" href="/">
+        <svg width="40" height="40" viewBox="0 0 40 40" aria-hidden="true">
+          <path d="M6 8 Q20 4 34 9 Q37 20 33 32 Q20 37 7 32 Q3 20 6 8Z" fill="#7f8bff" stroke="#10162f" stroke-width="2.5"/>
+          <path d="M15 12 L13 29 M24 12 L22 29 M10 17 L29 17 M9 24 L28 24" stroke="#10162f" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+        </svg>
+        <span class="mdf-brand-name">{config.name}</span>
+      </a>
+      <div class="mdf-nav-links">
+        {nav.map(item => (
+          <a
+            href={item.path}
+            class={item.style === 'button' ? 'mdf-nav-button' : undefined}
+          >{item.label}</a>
+        ))}
+      </div>
+    </nav>
+
+    <main>
+      <slot />
+    </main>
+
+    <footer class="mdf-footer">
+      <span>{config.footer.left}</span>
+      <span>{config.footer.right}</span>
+    </footer>
+  </div>
+</body>
+</html>

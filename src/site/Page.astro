@@ -1,0 +1,29 @@
+---
+/**
+ * A page, in the layout its frontmatter names. Only the markdownfirst theme
+ * ships page layouts; a site on the blog theme cannot have pages at all (the
+ * validator refuses them).
+ *
+ * See src/site/Post.astro for why the branches are literal components rather
+ * than a lookup.
+ */
+import MarkdownfirstPage from '../themes/markdownfirst/Page.astro';
+import MarkdownfirstHome from '../themes/markdownfirst/Home.astro';
+
+interface Props {
+  page: any;
+  site: any;
+}
+
+const { page, site } = Astro.props;
+---
+
+{page.layout === 'home' ? (
+  <MarkdownfirstHome page={page} site={site}>
+    <slot />
+  </MarkdownfirstHome>
+) : (
+  <MarkdownfirstPage page={page} site={site}>
+    <slot />
+  </MarkdownfirstPage>
+)}

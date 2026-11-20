@@ -1,0 +1,755 @@
+/*
+ * markdownfirst — direction E.
+ *
+ * Graph paper, navy ink, hand-drawn boxes. Everything here is scoped to `.mdf-`
+ * classes and to this theme's own document shell, so the blog theme's Tailwind
+ * build is untouched by it and the two themes cannot leak into each other.
+ *
+ * The fonts are self-hosted: Gaegu for the hand-written headings, Nunito for
+ * the body, both latin subsets as woff2 in ./fonts (SIL OFL 1.1, licence text
+ * alongside them). Nothing here asks a font CDN for anything.
+ *
+ * Sizes are the design's own, with `clamp()` on the display type so the page
+ * still fits a 390 px phone without horizontal scrolling.
+ */
+
+@font-face {
+  font-family: 'Gaegu';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./fonts/gaegu-latin-400-normal.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Gaegu';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('./fonts/gaegu-latin-700-normal.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Nunito';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./fonts/nunito-latin-400-normal.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Nunito';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('./fonts/nunito-latin-600-normal.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Nunito';
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url('./fonts/nunito-latin-800-normal.woff2') format('woff2');
+}
+
+:root {
+  --mdf-bg: #fbfbf6;
+  --mdf-ink: #10162f;
+  --mdf-blue: #2d3bd6;
+  --mdf-orange: #ff6a2b;
+  --mdf-softblue: #7f8bff;
+  --mdf-chip: #fff3b0;
+  --mdf-yellow: #ffe14d;
+  --mdf-dim: #2f3557;
+  --mdf-rule: #c9cde6;
+
+  --mdf-hand: 'Gaegu', 'Comic Sans MS', cursive;
+  --mdf-body-font: 'Nunito', 'Trebuchet MS', sans-serif;
+  --mdf-mono: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+
+  /* The design's two hand-drawn corner treatments. */
+  --mdf-radius-a: 255px 15px 225px 15px / 15px 225px 15px 255px;
+  --mdf-radius-b: 15px 225px 15px 255px / 255px 15px 225px 15px;
+  --mdf-card-a: 22px 6px 26px 8px / 8px 26px 6px 22px;
+  --mdf-card-b: 8px 26px 6px 22px / 22px 6px 26px 8px;
+  --mdf-outline: 2.5px solid var(--mdf-ink);
+  --mdf-outline-thick: 3px solid var(--mdf-ink);
+}
+
+.mdf-body {
+  margin: 0;
+  min-height: 100vh;
+  color: var(--mdf-ink);
+  font-family: var(--mdf-body-font);
+  font-size: 17px;
+  line-height: 1.55;
+  background-color: var(--mdf-bg);
+  background-image:
+    linear-gradient(rgba(45, 59, 214, 0.16) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(45, 59, 214, 0.16) 1px, transparent 1px),
+    linear-gradient(rgba(45, 59, 214, 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(45, 59, 214, 0.07) 1px, transparent 1px);
+  background-size: 120px 120px, 120px 120px, 24px 24px, 24px 24px;
+  -webkit-font-smoothing: antialiased;
+}
+
+.mdf-body a {
+  color: var(--mdf-blue);
+}
+
+.mdf-body a:hover {
+  color: var(--mdf-ink);
+}
+
+.mdf-shell {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 72px;
+}
+
+.mdf-home {
+  display: flex;
+  flex-direction: column;
+  gap: 72px;
+  padding: 16px 0 0;
+}
+
+.mdf-hero {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(420px, 100%), 1fr));
+  gap: 48px;
+  align-items: center;
+}
+
+.mdf-hero-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+}
+
+.mdf-hero-art {
+  display: flex;
+  justify-content: center;
+  min-width: 0;
+}
+
+.mdf-hero-art svg {
+  max-width: 440px;
+  height: auto;
+}
+
+/* ---------------------------------------------------------------- nav ---- */
+
+.mdf-nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-top: 28px;
+}
+
+.mdf-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  text-decoration: none;
+  color: var(--mdf-ink);
+}
+
+.mdf-brand-name {
+  font-family: var(--mdf-hand);
+  font-size: 30px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.mdf-nav-links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 24px;
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.mdf-nav-links a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--mdf-ink);
+  text-decoration: none;
+}
+
+.mdf-nav-links a:hover {
+  color: var(--mdf-blue);
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+}
+
+.mdf-nav-links .mdf-nav-button {
+  padding: 10px 18px;
+  min-height: 44px;
+  box-sizing: border-box;
+  background: var(--mdf-ink);
+  color: var(--mdf-yellow);
+  border-radius: var(--mdf-radius-a);
+  text-decoration: none;
+}
+
+.mdf-nav-links .mdf-nav-button:hover {
+  color: var(--mdf-yellow);
+  text-decoration: underline;
+}
+
+/* ------------------------------------------------------------ headings ---- */
+
+.mdf-h1,
+.mdf-h2,
+.mdf-h3 {
+  margin: 0;
+  font-family: var(--mdf-hand);
+  font-weight: 700;
+  color: var(--mdf-ink);
+}
+
+.mdf-h1 {
+  font-size: clamp(42px, 8vw, 72px);
+  line-height: 1;
+}
+
+.mdf-h2 {
+  font-size: clamp(34px, 5.5vw, 52px);
+  line-height: 1.05;
+}
+
+.mdf-h3 {
+  font-size: 32px;
+  line-height: 1.2;
+}
+
+.mdf-highlight {
+  background: var(--mdf-orange);
+  padding: 0 10px;
+  border-radius: var(--mdf-radius-a);
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+.mdf-lead {
+  margin: 0;
+  font-size: 20px;
+  max-width: 520px;
+}
+
+.mdf-section {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  scroll-margin-top: 24px;
+}
+
+.mdf-section-intro {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mdf-section-intro p {
+  margin: 0;
+  max-width: 700px;
+}
+
+/* -------------------------------------------------------------- blocks ---- */
+
+.mdf-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.mdf-button {
+  min-height: 48px;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  padding: 12px 24px;
+  font-weight: 800;
+  text-decoration: none;
+  border: var(--mdf-outline);
+  border-radius: var(--mdf-radius-a);
+}
+
+.mdf-button-primary {
+  background: var(--mdf-blue);
+  color: #ffffff;
+}
+
+/* `.mdf-body a` would otherwise win on specificity and paint the label blue. */
+.mdf-body a.mdf-button-primary,
+.mdf-body a.mdf-button-primary:hover {
+  color: #ffffff;
+}
+
+.mdf-button-primary:hover {
+  background: var(--mdf-ink);
+}
+
+.mdf-button-secondary {
+  background: #ffffff;
+  color: var(--mdf-ink);
+  border-radius: var(--mdf-radius-b);
+}
+
+.mdf-body a.mdf-button-secondary,
+.mdf-body a.mdf-button-secondary:hover {
+  color: var(--mdf-ink);
+}
+
+.mdf-button-secondary:hover {
+  background: var(--mdf-chip);
+}
+
+/* --------------------------------------------------------------- cards ---- */
+
+.mdf-card {
+  background: #ffffff;
+  border: var(--mdf-outline-thick);
+  border-radius: var(--mdf-card-a);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.mdf-card-b {
+  border-radius: var(--mdf-card-b);
+}
+
+.mdf-card-orange {
+  background: var(--mdf-orange);
+}
+
+.mdf-card-blue {
+  background: var(--mdf-softblue);
+}
+
+.mdf-card-chip {
+  background: var(--mdf-chip);
+}
+
+.mdf-card h3 {
+  font-size: 21px;
+  font-weight: 800;
+  margin: 0;
+}
+
+.mdf-card p {
+  margin: 0;
+}
+
+.mdf-card a {
+  font-weight: 800;
+  color: var(--mdf-ink);
+}
+
+.mdf-card-stack {
+  gap: 4px;
+}
+
+.mdf-card-sm {
+  padding: 20px;
+}
+
+.mdf-card-paths {
+  gap: 12px;
+}
+
+.mdf-card-faq {
+  padding: 22px;
+  gap: 6px;
+}
+
+.mdf-running-title {
+  font-size: 19px;
+}
+
+.mdf-card-link {
+  text-decoration: none;
+  color: var(--mdf-ink);
+}
+
+.mdf-card-link:hover {
+  color: var(--mdf-blue);
+  text-decoration: underline;
+}
+
+.mdf-card-link:hover strong {
+  color: var(--mdf-blue);
+}
+
+.mdf-note-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr));
+  gap: 16px;
+}
+
+.mdf-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
+  gap: 24px;
+}
+
+.mdf-faq-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(420px, 100%), 1fr));
+  gap: 16px;
+}
+
+.mdf-live-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr));
+  gap: 16px;
+}
+
+.mdf-code {
+  font-family: var(--mdf-mono);
+  font-size: 0.86em;
+  background: var(--mdf-chip);
+  padding: 2px 6px;
+  border-radius: 6px;
+}
+
+.mdf-step-number {
+  font-family: var(--mdf-hand);
+  font-size: 48px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--mdf-blue);
+}
+
+/* ---------------------------------------------------------------- race ---- */
+
+.mdf-race {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.mdf-race-panel {
+  border: var(--mdf-outline-thick);
+  border-radius: var(--mdf-card-a);
+  padding: 28px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
+  gap: 24px;
+  align-items: center;
+}
+
+.mdf-race-panel:nth-child(even) {
+  border-radius: var(--mdf-card-b);
+}
+
+.mdf-race-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.mdf-race-label {
+  font-family: var(--mdf-hand);
+  font-size: 30px;
+  font-weight: 700;
+  color: var(--mdf-ink);
+}
+
+.mdf-race-art {
+  display: flex;
+  justify-content: center;
+}
+
+.mdf-race-art svg {
+  width: 220px;
+  max-width: 100%;
+  height: auto;
+}
+
+.mdf-tokens {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+}
+
+.mdf-tokens strong {
+  font-family: var(--mdf-hand);
+  font-size: clamp(48px, 10vw, 64px);
+  font-weight: 700;
+  line-height: 1;
+}
+
+.mdf-tokens span {
+  font-weight: 600;
+}
+
+.mdf-credit {
+  margin: 0;
+  font-size: 14px;
+  color: var(--mdf-dim);
+}
+
+/* ------------------------------------------------------------ visitors ---- */
+
+.mdf-visitors {
+  background: #ffffff;
+  border: var(--mdf-outline-thick);
+  border-radius: var(--mdf-card-a);
+  padding: 32px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr));
+  gap: 32px;
+  align-items: center;
+}
+
+.mdf-visitor {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+}
+
+.mdf-visitor svg {
+  width: 100%;
+  max-width: 280px;
+  height: auto;
+}
+
+.mdf-visitor-title {
+  font-family: var(--mdf-hand);
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.mdf-address {
+  font-family: var(--mdf-hand);
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.mdf-address-chip {
+  background: var(--mdf-chip);
+  border: var(--mdf-outline-thick);
+  border-radius: var(--mdf-card-b);
+  padding: 10px 16px;
+  font-family: var(--mdf-body-font);
+  font-weight: 800;
+  overflow-wrap: break-word;
+  max-width: 100%;
+}
+
+.mdf-small {
+  font-size: 15px;
+  color: var(--mdf-dim);
+}
+
+/* --------------------------------------------------------------- posts ---- */
+
+.mdf-post-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.mdf-post-list a {
+  display: block;
+  min-height: 44px;
+  padding: 12px 0;
+  border-bottom: 2px dashed rgba(16, 22, 47, 0.35);
+  color: var(--mdf-ink);
+  text-decoration: none;
+  font-weight: 700;
+}
+
+.mdf-post-list a:hover {
+  color: var(--mdf-blue);
+  text-decoration: underline;
+}
+
+/* ------------------------------------------------------------------ 404 ---- */
+
+.mdf-404 {
+  padding: 48px 0 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+/* -------------------------------------------------------------- footer ---- */
+
+.mdf-footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 32px 0 48px;
+  border-top: 2.5px dashed var(--mdf-ink);
+  font-size: 15px;
+  color: var(--mdf-dim);
+}
+
+/* ---------------------------------------------------------- prose pages ---- */
+
+.mdf-page-title {
+  font-family: var(--mdf-hand);
+  font-size: clamp(34px, 6vw, 48px);
+  line-height: 1.05;
+  font-weight: 700;
+  margin: 0 0 16px;
+}
+
+.mdf-prose {
+  max-width: 720px;
+}
+
+.mdf-prose h2,
+.mdf-prose h3 {
+  font-family: var(--mdf-hand);
+  font-weight: 700;
+  color: var(--mdf-ink);
+  margin: 2rem 0 0.5rem;
+}
+
+.mdf-prose h2 {
+  font-size: clamp(28px, 4.5vw, 38px);
+  line-height: 1.15;
+}
+
+.mdf-prose h3 {
+  font-size: 25px;
+}
+
+.mdf-prose p,
+.mdf-prose ul,
+.mdf-prose ol {
+  margin: 0 0 1rem;
+}
+
+.mdf-prose ul,
+.mdf-prose ol {
+  padding-left: 1.5rem;
+}
+
+.mdf-prose li {
+  margin-bottom: 0.35rem;
+}
+
+.mdf-prose a {
+  color: var(--mdf-blue);
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 2px;
+}
+
+.mdf-prose code {
+  font-family: var(--mdf-mono);
+  font-size: 0.86em;
+  background: var(--mdf-chip);
+  padding: 2px 6px;
+  border-radius: 6px;
+}
+
+.mdf-prose pre {
+  background: #ffffff;
+  border: var(--mdf-outline);
+  border-radius: var(--mdf-card-b);
+  padding: 16px 18px;
+  overflow-x: auto;
+  margin: 0 0 1rem;
+}
+
+.mdf-prose pre code {
+  background: none;
+  padding: 0;
+  font-size: 0.85em;
+}
+
+.mdf-prose blockquote {
+  margin: 0 0 1rem;
+  padding: 12px 18px;
+  border-left: 4px solid var(--mdf-orange);
+  background: #ffffff;
+  border-radius: 0 var(--mdf-card-b) var(--mdf-card-b) 0;
+}
+
+.mdf-prose img {
+  max-width: 100%;
+  height: auto;
+}
+
+.mdf-prose table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1rem;
+}
+
+.mdf-prose th,
+.mdf-prose td {
+  border: 2px solid var(--mdf-ink);
+  padding: 8px 10px;
+  text-align: left;
+}
+
+/* -------------------------------------------------------------- motion ---- */
+
+@keyframes mdf-bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+@keyframes mdf-drift {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(14px); }
+}
+
+.mdf-bob {
+  animation: mdf-bob 3s ease-in-out infinite;
+}
+
+.mdf-drift {
+  animation: mdf-drift 2.4s ease-in-out infinite alternate;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mdf-bob,
+  .mdf-drift {
+    animation: none;
+  }
+}
+
+/* ------------------------------------------------------------ small screens ---- */
+
+@media (max-width: 640px) {
+  .mdf-shell {
+    padding: 0 20px;
+    gap: 56px;
+  }
+
+  .mdf-nav-links {
+    gap: 4px 18px;
+    font-size: 15px;
+  }
+
+  .mdf-race-panel,
+  .mdf-visitors {
+    padding: 22px;
+  }
+}

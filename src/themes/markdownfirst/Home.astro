@@ -1,0 +1,239 @@
+---
+/**
+ * The designed home page (direction E).
+ *
+ * Chrome, layout and illustration are the theme's; every word, link and number
+ * comes from the page's frontmatter via lib/home-data.mjs. So changing the
+ * copy is a content PR, and this file only changes when the design does.
+ *
+ * The page's markdown body is the agent-facing version of this page, and it is
+ * served at the same URL under `Accept: text/markdown` — which is why the
+ * validator insists a custom-layout page still carries a real body.
+ */
+import Base from './Base.astro';
+import { normaliseHome } from '../../lib/home-data.mjs';
+import { marked } from 'marked';
+import Robot from './art/Robot.astro';
+import Browser from './art/Browser.astro';
+import Agent from './art/Agent.astro';
+import AddressSplit from './art/AddressSplit.astro';
+import MessyStack from './art/MessyStack.astro';
+import TidyPage from './art/TidyPage.astro';
+
+interface Props {
+  page: any;
+  site: any;
+}
+
+const { page, site } = Astro.props;
+const { home } = normaliseHome(page.data ?? {});
+const { hero, sections } = home;
+
+const inline = (text: string) => {
+  try {
+    return marked.parseInline(String(text ?? ''));
+  } catch {
+    return String(text ?? '');
+  }
+};
+
+const art = {
+  browser: Browser,
+  agent: Agent,
+  address: AddressSplit,
+  messy: MessyStack,
+  tidy: TidyPage,
+  robot: Robot,
+};
+
+const toneClass = (tone: string) =>
+  tone === 'orange' ? 'mdf-card-orange' : tone === 'blue' ? 'mdf-card-blue' : '';
+---
+
+<Base title={page.title} description={page.description} site={site}>
+  <div class="mdf-home">
+    <section class="mdf-hero" id="top">
+      <div class="mdf-hero-copy">
+        <h1 class="mdf-h1">
+          {hero.headline}{' '}
+          {hero.highlight && <span class="mdf-highlight">{hero.highlight}</span>}
+        </h1>
+        {hero.lead && <p class="mdf-lead" set:html={inline(hero.lead)} />}
+        <div class="mdf-actions">
+          {hero.actions.map(action => (
+            <a
+              class={action.style === 'primary' ? 'mdf-button mdf-button-primary' : 'mdf-button mdf-button-secondary'}
+              href={action.href}
+            >{action.label}</a>
+          ))}
+        </div>
+      </div>
+      <div class="mdf-hero-art">
+        <Robot />
+      </div>
+    </section>
+
+    {sections.unchanged && (
+      <section class="mdf-section" id="same">
+        <div class="mdf-section-intro">
+          <h2 class="mdf-h2">{sections.unchanged.heading}</h2>
+          {sections.unchanged.lead && <p set:html={inline(sections.unchanged.lead)} />}
+        </div>
+
+        <div class="mdf-visitors">
+          {sections.unchanged.items.map(item => {
+            if (item.art === 'address') {
+              return (
+                <div class="mdf-visitor">
+                  <span class="mdf-address">{item.title}</span>
+                  {sections.unchanged.address && (
+                    <span class="mdf-address-chip">{sections.unchanged.address}</span>
+                  )}
+                  <AddressSplit />
+                  {item.body && <span class="mdf-small" set:html={inline(item.body)} />}
+                </div>
+              );
+            }
+            const Art = item.art === 'agent' ? Agent : Browser;
+            return (
+              <div class="mdf-visitor">
+                <Art />
+                <span class="mdf-visitor-title">{item.title}</span>
+                {item.body && <span set:html={inline(item.body)} />}
+              </div>
+            );
+          })}
+        </div>
+
+        {sections.unchanged.notes && sections.unchanged.notes.length > 0 && (
+          <div class="mdf-note-grid">
+            {sections.unchanged.notes.map((note, index) => (
+              <div class={index % 2 === 1 ? 'mdf-card mdf-card-stack mdf-card-b' : 'mdf-card mdf-card-stack'}>
+                <strong>{note.title}</strong>
+                {note.body && <span set:html={inline(note.body)} />}
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+    )}
+
+    {sections.compare && (
+      <section class="mdf-section" id="race">
+        <div class="mdf-section-intro">
+          <h2 class="mdf-h2">{sections.compare.heading}</h2>
+          {sections.compare.lead && <p set:html={inline(sections.compare.lead)} />}
+        </div>
+
+        <div class="mdf-race">
+          {sections.compare.items.map(item => {
+            const Art = art[item.art as keyof typeof art] ?? MessyStack;
+            return (
+              <div class={`mdf-race-panel ${toneClass(item.tone)}`}>
+                <div class="mdf-race-copy">
+                  <span class="mdf-race-label">{item.label}</span>
+                  {item.body && <span set:html={inline(item.body)} />}
+                </div>
+                <div class="mdf-race-art">
+                  <Art />
+                </div>
+                {item.tokens && (
+                  <div class="mdf-tokens">
+                    <strong>{item.tokens}</strong>
+                    <span>{item.tokensNote ?? 'tokens to read it'}</span>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {sections.compare.credit && (
+          <p class="mdf-credit" set:html={inline(sections.compare.credit)} />
+        )}
+      </section>
+    )}
+
+    {sections.steps && (
+      <section class="mdf-section" id="how">
+        <h2 class="mdf-h2">{sections.steps.heading}</h2>
+        <div class="mdf-card-grid">
+          {sections.steps.items.map((item, index) => (
+            <div class={index % 2 === 1 ? 'mdf-card mdf-card-b' : 'mdf-card'}>
+              <span class="mdf-step-number">{index + 1}</span>
+              <h3>{item.title}</h3>
+              {item.body && <p set:html={inline(item.body)} />}
+            </div>
+          ))}
+        </div>
+      </section>
+    )}
+
+    {sections.paths && (
+      <section class="mdf-section" id="paths">
+        <h2 class="mdf-h2">{sections.paths.heading}</h2>
+        <div class="mdf-card-grid">
+          {sections.paths.items.map((item, index) => (
+            <div class={`mdf-card mdf-card-paths ${toneClass(item.tone)}${index % 2 === 1 ? ' mdf-card-b' : ''}`}>
+              <h3 class="mdf-h3">{item.title}</h3>
+              {item.body && <p set:html={inline(item.body)} />}
+              {item.linkLabel && item.href && (
+                <a href={item.href}>{item.linkLabel}</a>
+              )}
+            </div>
+          ))}
+        </div>
+      </section>
+    )}
+
+    {sections.running && (
+      <section class="mdf-section" id="live">
+        <h2 class="mdf-h2">{sections.running.heading}</h2>
+        <div class="mdf-live-grid">
+          {sections.running.items.map((item, index) => {
+            const inner = (
+              <>
+                <strong class="mdf-running-title">{item.title}</strong>
+                {item.body && <span set:html={inline(item.body)} />}
+              </>
+            );
+            if (item.placeholder) {
+              return (
+                <div class="mdf-card mdf-card-chip mdf-card-stack mdf-card-sm">
+                  {inner}
+                </div>
+              );
+            }
+            if (item.href) {
+              return (
+                <a
+                  class={`mdf-card mdf-card-stack mdf-card-sm mdf-card-link${index % 2 === 1 ? ' mdf-card-b' : ''}`}
+                  href={item.href}
+                >{inner}</a>
+              );
+            }
+            return (
+              <div class={`mdf-card mdf-card-stack mdf-card-sm${index % 2 === 1 ? ' mdf-card-b' : ''}`}>
+                {inner}
+              </div>
+            );
+          })}
+        </div>
+      </section>
+    )}
+
+    {sections.faq && (
+      <section class="mdf-section" id="faq">
+        <h2 class="mdf-h2">{sections.faq.heading}</h2>
+        <div class="mdf-faq-grid">
+          {sections.faq.items.map((item, index) => (
+            <div class={`mdf-card mdf-card-faq${index % 2 === 1 ? ' mdf-card-b' : ''}`}>
+              <h3>{item.q}</h3>
+              <p set:html={inline(item.a)} />
+            </div>
+          ))}
+        </div>
+      </section>
+    )}
+  </div>
+</Base>

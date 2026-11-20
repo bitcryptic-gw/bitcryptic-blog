@@ -1,23 +1,21 @@
 ---
 export const prerender = false;
-import Post from '../../layouts/Post.astro';
 import { marked } from 'marked';
-import { loadPosts } from '../../../scripts/validate-content.mjs';
+import SitePost from '../../site/Post.astro';
+import { getSite } from '../../lib/site.mjs';
 
 const { slug } = Astro.params;
-const contentDir = process.env.CONTENT_DIR ?? '/app/src/content/blog';
-const { posts, skipped } = loadPosts(contentDir);
+const site = getSite();
 
-// A post that fails validation is skipped here, not 500'd: the site keeps
-// serving everything else, and the sync loop will have refused to publish it
-// anyway.
-for (const { file, message } of skipped) console.warn(`[content] skipping ${file}: ${message}`);
+const post = site.posts.find(p => p.slug === slug);
 
-const post = posts.find(p => p.slug === slug);
-
+// A post that fails validation is skipped by the loader, not 500'd: the site
+// keeps serving everything else, and the sync loop will have refused to publish
+// it anyway.
+//
 // An unknown or draft slug is a real 404 at its own URL: no redirect, which
-// crawlers read as a soft 404. The page body is the existing not-found page,
-// and the middleware serves its markdown counterpart when one was negotiated.
+// crawlers read as a soft 404. The page body is the theme's not-found page, and
+// the middleware serves its markdown counterpart when one was negotiated.
 if (!post) {
   Astro.response.status = 404;
   return Astro.rewrite('/404');
@@ -26,16 +24,6 @@ if (!post) {
 const contentHtml = await marked(post.content);
 ---
 
-<Post
-  title={post.title}
-  description={post.description}
-  date={post.date}
-  updated={post.updated}
-  author={post.author}
-  tags={post.tags}
-  supersededBy={post.superseded_by}
-  supersededOn={post.superseded_on}
-  supersededNote={post.superseded_note}
->
+<SitePost post={post} site={site.config}>
   <div set:html={contentHtml} />
-</Post>
+</SitePost>

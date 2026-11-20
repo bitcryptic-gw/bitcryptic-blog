@@ -1,0 +1,35 @@
+---
+export const prerender = false;
+/**
+ * A page: `/how-it-works/`, `/spec/`, and every other single-segment URL a
+ * published page claims.
+ *
+ * The post index and every static route are more specific and win over this
+ * one. An unknown slug is a real 404 at its own URL — the same not-found page
+ * the blog serves, in the site's theme — with no redirect, and the URL it
+ * reports as canonical is the one that was asked for.
+ */
+import { marked } from 'marked';
+import SitePage from '../site/Page.astro';
+import SiteNotFound from '../site/NotFound.astro';
+import { getSite, pageBySlug } from '../lib/site.mjs';
+import { slugFromPath } from '../lib/pages.mjs';
+
+const site = getSite();
+const slug = slugFromPath(Astro.url.pathname);
+const page = slug === null ? null : pageBySlug(site, slug);
+
+// Rendered here rather than rewritten to /404: a rewrite would answer with
+// /404 as the canonical URL, and this URL is the one that 404s.
+if (!page) Astro.response.status = 404;
+
+const contentHtml = page ? await marked(page.content) : '';
+---
+
+{page ? (
+  <SitePage page={page} site={site.config}>
+    <div set:html={contentHtml} />
+  </SitePage>
+) : (
+  <SiteNotFound site={site.config} />
+)}

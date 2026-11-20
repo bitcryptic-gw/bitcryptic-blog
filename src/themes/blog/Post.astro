@@ -2,25 +2,19 @@
 import Base from './Base.astro';
 
 interface Props {
-  title: string;
-  description: string;
-  date: Date;
-  updated?: Date;
-  author: string;
-  tags: string[];
-  supersededBy?: string;
-  supersededOn?: Date;
-  supersededNote?: string;
+  post: any;
+  site: any;
 }
 
-const { title, description, date, updated, author, tags, supersededBy, supersededNote } = Astro.props;
+const { post, site } = Astro.props;
+const { title, description, date, updated, author, tags, superseded_by: supersededBy, superseded_note: supersededNote } = post;
 
 const dateStr = date.toLocaleDateString('en-AU', { year: 'numeric', month: 'long', day: 'numeric' });
 const updatedStr = updated?.toLocaleDateString('en-AU', { year: 'numeric', month: 'long', day: 'numeric' });
 const monthYearStr = date.toLocaleDateString('en-AU', { year: 'numeric', month: 'long' });
 ---
 
-<Base title={title} description={description} ogType="article">
+<Base title={title} description={description} ogType="article" site={site}>
   <article>
     {supersededBy && (
       <div class="mb-10 border border-bc-border bg-bc-card px-5 py-4 rounded">

@@ -1,0 +1,77 @@
+---
+/**
+ * The blog index: one line per published post, newest first. The blog's home
+ * page, and what `/` renders whenever a site has posts but no home page.
+ *
+ * The `\n` around the description in the markup are the ones this paragraph
+ * has always been served with — the byte-identity gate compares the HTML, not
+ * the source.
+ */
+import Base from './Base.astro';
+
+interface Props {
+  posts: any[];
+  site: any;
+}
+
+const { posts, site } = Astro.props;
+
+// The description paragraph has always been served with a newline either side
+// of the text. Keep it exactly that way: the byte-identity gate compares the
+// HTML, not the source.
+const newline = String.fromCharCode(10);
+const description = newline + site.description + newline;
+---
+
+<Base title="Blog" site={site}>
+  <div class="mb-16">
+    <p class="font-mono text-xs text-bc-cyan tracking-widest uppercase mb-3">BitCryptic™</p>
+    <h1 class="font-display text-5xl text-bc-white mb-4">Blog</h1>
+    <p class="text-bc-muted text-lg">{description}</p>
+  </div>
+
+  {posts.length === 0 ? (
+    <p class="text-bc-muted font-mono text-sm">No posts published yet.</p>
+  ) : (
+    <div class="space-y-px">
+      {posts.map(post => {
+        const dateStr = new Date(post.date).toLocaleDateString('en-AU', {
+          year: 'numeric', month: 'short', day: 'numeric'
+        });
+        const postUrl = '/blog/' + post.slug;
+        return (
+
+            <a href={postUrl} class="group block py-7 border-b border-bc-border hover:border-bc-cyan-dim transition-colors no-underline">
+            <div class="flex items-start justify-between gap-6">
+              <div class="flex-1 min-w-0">
+                <h2 class="font-display text-xl text-bc-white group-hover:text-bc-cyan transition-colors mb-2 leading-snug">
+                  {post.title}
+                </h2>
+                {post.superseded_by && (
+                  <span class="inline-block font-mono text-xs text-bc-cyan-dim border border-bc-border px-1.5 py-px rounded mb-2">
+                    superseded
+                  </span>
+                )}
+                <p class="text-bc-muted text-sm leading-relaxed line-clamp-2">
+                  {post.description}
+                </p>
+                {post.tags && post.tags.length > 0 && (
+                  <div class="flex flex-wrap gap-1.5 mt-3">
+                    {post.tags.map(tag => (
+                      <span class="font-mono text-xs text-bc-cyan-dim border border-bc-border px-1.5 py-px rounded">
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <time class="font-mono text-xs text-bc-muted whitespace-nowrap pt-1 shrink-0">
+                {dateStr}
+              </time>
+            </div>
+          </a>
+        );
+      })}
+    </div>
+  )}
+</Base>

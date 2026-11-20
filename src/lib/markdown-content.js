@@ -28,10 +28,11 @@ export const BLOG_DESCRIPTION =
 /**
  * The canonical HTML URL of a post — also the `canonical` in its markdown.
  * @param {string} slug
+ * @param {string} [origin]
  * @returns {string}
  */
-export function postHtmlUrl(slug) {
-  return `${SITE_URL}/blog/${slug}/`;
+export function postHtmlUrl(slug, origin = SITE_URL) {
+  return `${origin}/blog/${slug}/`;
 }
 
 /**
@@ -59,10 +60,10 @@ function yamlString(value) {
  * @param {MarkdownPost} post
  * @returns {string | null}
  */
-export function supersededBlockquote(post) {
+export function supersededBlockquote(post, origin = SITE_URL) {
   if (!post.superseded_by) return null;
   const note = post.superseded_note ? ` ${post.superseded_note}` : '';
-  const link = postHtmlUrl(post.superseded_by);
+  const link = postHtmlUrl(post.superseded_by, origin);
   return (
     `> **Kept for the record.** This post is from ${monthYear(post.date)} and has been superseded.${note} ` +
     `See [the current state of MDF](${link}).`
@@ -74,7 +75,7 @@ export function supersededBlockquote(post) {
  * @param {MarkdownPost} post
  * @returns {string[]}
  */
-export function frontmatterLines(post) {
+export function frontmatterLines(post, origin = SITE_URL) {
   const lines = [
     '---',
     `title: ${yamlString(post.title)}`,
@@ -83,9 +84,9 @@ export function frontmatterLines(post) {
   if (post.updated) lines.push(`updated: ${isoDate(post.updated)}`);
   lines.push(`author: ${yamlString(post.author)}`);
   lines.push(`tags: [${post.tags.map(yamlString).join(', ')}]`);
-  lines.push(`canonical: ${yamlString(postHtmlUrl(post.slug))}`);
+  lines.push(`canonical: ${yamlString(postHtmlUrl(post.slug, origin))}`);
   if (post.superseded_by) {
-    lines.push(`superseded_by: ${yamlString(postHtmlUrl(post.superseded_by))}`);
+    lines.push(`superseded_by: ${yamlString(postHtmlUrl(post.superseded_by, origin))}`);
     if (post.superseded_note) lines.push(`superseded_note: ${yamlString(post.superseded_note)}`);
   }
   lines.push('---');
@@ -144,15 +145,16 @@ export function absolutiseLinks(body, baseUrl) {
 /**
  * One published post as a standalone markdown document.
  * @param {MarkdownPost} post
+ * @param {string} [origin]
  * @returns {string}
  */
-export function postMarkdown(post) {
-  const htmlUrl = postHtmlUrl(post.slug);
-  const banner = supersededBlockquote(post);
+export function postMarkdown(post, origin = SITE_URL) {
+  const htmlUrl = postHtmlUrl(post.slug, origin);
+  const banner = supersededBlockquote(post, origin);
   const body = absolutiseLinks(post.content, htmlUrl).replace(/^\n+/, '').replace(/\s*$/, '\n');
 
   const parts = [
-    frontmatterLines(post).join('\n'),
+    frontmatterLines(post, origin).join('\n'),
     '',
     `# ${post.title}`,
     '',
@@ -164,37 +166,53 @@ export function postMarkdown(post) {
 
 /**
  * The index as markdown: one line per published post, newest first.
+ *
+ * `site` is the resolved site config; its defaults are the blog's own wording,
+ * so calling this with just the posts keeps the blog's output byte-identical.
+ *
  * @param {MarkdownPost[]} posts
+ * @param {{ origin?: string, description?: string, name?: string }} [site]
  * @returns {string}
  */
-export function indexMarkdown(posts) {
+export function indexMarkdown(posts, site = {}) {
+  const origin = site.origin ?? SITE_URL;
   const lines = [
-    '# BitCryptic Blog',
+    `# ${site.name ?? 'BitCryptic Blog'}`,
     '',
-    BLOG_DESCRIPTION,
+    site.description ?? BLOG_DESCRIPTION,
     '',
   ];
   for (const post of posts) {
     const superseded = post.superseded_by ? ' (superseded)' : '';
-    lines.push(`- [${post.title}](${postHtmlUrl(post.slug)}) — ${isoDate(post.date)} — ${post.description}${superseded}`);
+    lines.push(`- [${post.title}](${postHtmlUrl(post.slug, origin)}) — ${isoDate(post.date)} — ${post.description}${superseded}`);
   }
   return `${lines.join('\n')}\n`;
 }
 
 /**
- * The markdown half of a real 404.
+ * The markdown half of a real 404. Same text a reader gets, said in markdown.
+ * @param {{ origin?: string, notFound?: { heading: string, body: string, linkLabel: string, linkNote: string } }} [site]
  * @returns {string}
  */
-export function notFoundMarkdown() {
+export function notFoundMarkdown(site = {}) {
+  const origin = site.origin ?? SITE_URL;
+  const copy = site.notFound ?? DEFAULT_NOT_FOUND;
   return [
-    '# Not found',
+    `# ${copy.heading}`,
     '',
-    'There is no page at this address.',
+    copy.body,
     '',
-    `See [the blog index](${SITE_URL}/) for the published posts.`,
+    `See [${copy.linkLabel}](${origin}/) ${copy.linkNote}`,
     '',
   ].join('\n');
 }
+
+const DEFAULT_NOT_FOUND = {
+  heading: 'Not found',
+  body: 'There is no page at this address.',
+  linkLabel: 'the blog index',
+  linkNote: 'for the published posts.',
+};
 
 /**
  * One line per markdown response, on stdout. Deliberately narrow: time, path,

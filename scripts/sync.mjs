@@ -34,7 +34,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 import { pathToFileURL } from 'node:url';
-import { validateContent } from './validate-content.mjs';
+import { validateCheckout } from './validate-content.mjs';
 import { readSecret } from './secrets.mjs';
 import { runCommand, countChildProcesses } from './run-command.mjs';
 
@@ -184,9 +184,8 @@ async function validateAt(sha, dir = CONTENT_DIR, timeoutMs = GIT_TIMEOUT_MS) {
   const worktree = fs.mkdtempSync(path.join(os.tmpdir(), 'blog-staging-'));
   try {
     await git(['worktree', 'add', '--detach', worktree, sha], { cwd: dir, timeoutMs });
-    const names = fs.readdirSync(worktree).filter(f => f.endsWith('.md')).sort();
-    const files = names.map(name => ({ name, raw: fs.readFileSync(path.join(worktree, name), 'utf-8') }));
-    return validateContent({ files });
+    // The whole checkout: site.json, the posts at the root, and pages/.
+    return validateCheckout(worktree);
   } finally {
     try {
       await git(['worktree', 'remove', '--force', worktree], { cwd: dir, timeoutMs });

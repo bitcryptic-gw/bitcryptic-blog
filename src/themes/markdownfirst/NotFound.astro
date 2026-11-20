@@ -1,0 +1,18 @@
+---
+import Base from './Base.astro';
+
+interface Props {
+  site: any;
+}
+const { site } = Astro.props;
+---
+
+<Base title="Not found" site={site}>
+  <div class="mdf-404">
+    <h1 class="mdf-h2">{site.notFound.heading}</h1>
+    <p>{site.notFound.body}</p>
+    <a class="mdf-button mdf-button-secondary" href="/">
+      Home
+    </a>
+  </div>
+</Base>

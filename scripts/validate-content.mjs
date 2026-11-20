@@ -24,13 +24,11 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import matter from 'gray-matter';
+import { SLUG_PATTERN, ALLOWED_STATUS, REQUIRED_FIELDS, LEGACY_FILE_STEMS } from '../src/lib/content-rules.mjs';
+import { loadSiteConfig } from '../src/lib/site-config.mjs';
+import { validatePages, readPagesDir, PAGES_DIR } from '../src/lib/pages.mjs';
 
-export const REQUIRED_FIELDS = ['title', 'slug', 'date', 'description', 'status'];
-export const ALLOWED_STATUS = ['draft', 'published'];
-export const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
-
-/** File stems that predate the stem == slug convention and are already live. */
-export const LEGACY_FILE_STEMS = new Set(['mdf-blog-post-20260526']);
+export { SLUG_PATTERN, ALLOWED_STATUS, REQUIRED_FIELDS, LEGACY_FILE_STEMS };
 
 const hasFrontmatter = raw => raw.startsWith('---');
 
@@ -231,9 +229,79 @@ export function formatReport(result) {
   const lines = [];
   for (const { file, message } of result.errors) lines.push(`FAIL  ${message}`);
   for (const { file, message } of result.warnings) lines.push(`warn  ${message}`);
-  for (const file of result.ignored) lines.push(`skip  ${file}: no frontmatter (not a post file)`);
-  lines.push(result.ok ? `OK    ${result.posts.length} post file(s) validated` : `FAILED ${result.errors.length} error(s)`);
+  for (const file of result.ignored ?? []) lines.push(`skip  ${file}: no frontmatter (not a content file)`);
+  const pages = result.pages?.length ? `, ${result.pages.length} page(s)` : '';
+  lines.push(result.ok ? `OK    ${result.posts.length} post file(s) validated${pages}` : `FAILED ${result.errors.length} error(s)`);
   return lines.join('\n');
+}
+
+/**
+ * Validate a whole checkout of a content repo: `site.json`, the posts at the
+ * root, and the pages in `pages/`.
+ *
+ * This is the check that gates publishing. A bad config is held back exactly
+ * like a bad post: the sync loop leaves the live content where it was and
+ * alerts once for the commit.
+ *
+ * @param {string} dir
+ * @param {{ strictNames?: boolean }} [options]
+ */
+export function validateCheckout(dir, { strictNames = false } = {}) {
+  const site = loadSiteConfig(dir);
+  const errors = [];
+  const warnings = [];
+
+  for (const message of site.errors) errors.push({ file: 'site.json', message });
+  for (const message of site.warnings) warnings.push({ file: 'site.json', message });
+
+  const { config } = site;
+
+  let postsResult = { posts: [], errors: [], warnings: [], ignored: [] };
+  try {
+    postsResult = validateContent({ files: readContentDir(dir), strictNames });
+    for (const error of postsResult.errors) errors.push(error);
+    for (const warning of postsResult.warnings) warnings.push(warning);
+  } catch (error) {
+    errors.push({ file: dir, message: `cannot read posts: ${error.message}` });
+  }
+
+  // A site that does not serve posts but has them, or vice versa, is a content
+  // repo drifting away from its own config. Worth saying, not worth blocking.
+  if (!config.content.posts && postsResult.posts.length > 0) {
+    warnings.push({
+      file: 'site.json',
+      message: `"content.posts" is false but this repo has ${postsResult.posts.length} post file(s); they will not be served`,
+    });
+  }
+
+  let pagesResult = { pages: [], errors: [], warnings: [], ignored: [] };
+  try {
+    const files = readPagesDir(dir);
+    if (files.length > 0 && !config.content.pages) {
+      warnings.push({
+        file: PAGES_DIR,
+        message: `"content.pages" is false but ${PAGES_DIR}/ has ${files.length} file(s); they will not be served`,
+      });
+    }
+    if (config.content.pages) {
+      pagesResult = validatePages({ files, theme: config.theme });
+      for (const error of pagesResult.errors) errors.push(error);
+      for (const warning of pagesResult.warnings) warnings.push(warning);
+    }
+  } catch (error) {
+    errors.push({ file: PAGES_DIR, message: `cannot read pages: ${error.message}` });
+  }
+
+  return {
+    ok: errors.length === 0,
+    config,
+    configErrorCount: site.errors.length,
+    posts: postsResult.posts,
+    pages: pagesResult.pages,
+    errors,
+    warnings,
+    ignored: [...(postsResult.ignored ?? []), ...(pagesResult.ignored ?? [])],
+  };
 }
 
 // CLI: node scripts/validate-content.mjs [dir] [--strict-names]
@@ -242,7 +310,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   const strictNames = args.includes('--strict-names');
   const dir = args.find(a => !a.startsWith('--')) ?? process.env.CONTENT_DIR ?? '/app/src/content/blog';
   try {
-    const result = validateContent({ files: readContentDir(dir), strictNames });
+    const result = validateCheckout(dir, { strictNames });
     console.log(formatReport(result));
     process.exit(result.ok ? 0 : 1);
   } catch (e) {

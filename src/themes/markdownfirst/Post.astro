@@ -1,0 +1,23 @@
+---
+/** A post in the markdownfirst theme: same content model as the blog's. */
+import Base from './Base.astro';
+
+interface Props {
+  post: any;
+  site: any;
+}
+
+const { post, site } = Astro.props;
+const dateStr = post.date.toLocaleDateString('en-AU', { year: 'numeric', month: 'long', day: 'numeric' });
+---
+
+<Base title={post.title} description={post.description} ogType="article" site={site}>
+  <article class="mdf-prose">
+    <h1 class="mdf-page-title">{post.title}</h1>
+    <p class="mdf-small">
+      <time datetime={post.date.toISOString()}>{dateStr}</time>
+      {' · '}{post.author}
+    </p>
+    <slot />
+  </article>
+</Base>

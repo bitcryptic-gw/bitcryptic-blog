@@ -1,0 +1,33 @@
+{
+  "name": "Fixture First",
+  "shortName": "FixtureFirst",
+  "titleTemplate": "{title} · FixtureFirst",
+  "origin": "https://fixture.example",
+  "theme": "markdownfirst",
+  "description": "A pages-only fixture site for the markdownfirst theme.",
+  "content": { "posts": false, "pages": true },
+  "nav": [
+    { "label": "About", "path": "/about/", "order": 10 },
+    { "label": "Secret", "path": "/secret/", "order": 15 },
+    { "label": "Missing", "path": "/not-a-page/", "order": 16 },
+    { "label": "Try the demo", "path": "https://mdf-demo.example", "order": 20, "style": "button" }
+  ],
+  "umami": null,
+  "footer": { "left": "Open source · MDF 0.3.1", "right": "Fixture × Test" },
+  "mdf": { "name": "Fixture First", "contact": "https://fixture.example/contact" },
+  "llms": {
+    "description": "A pages-only fixture site.",
+    "intro": ["Pages here are also markdown."],
+    "site": [
+      "- [Home]({origin}/) — the home page.",
+      "- [MDF document]({origin}/mdf.json) — every page is free."
+    ],
+    "topics": "fixtures, markdown."
+  },
+  "notFound": {
+    "heading": "No such page",
+    "body": "Nothing is served at this address.",
+    "linkLabel": "the home page",
+    "linkNote": "for the fixture."
+  }
+}
