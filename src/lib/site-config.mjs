@@ -97,6 +97,48 @@ export function originError(value) {
   return null;
 }
 
+/** The one analytics host this image will talk to. */
+export const ANALYTICS_HOST = 'webstats.bitcryptic.com';
+
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * An analytics script URL is deliberately narrower than a site origin: it is a
+ * script we hand to every visitor's browser, so it must be HTTPS, must be the
+ * self-hosted Umami host, and must carry no credentials or query string.
+ */
+export function analyticsScriptUrlError(value) {
+  if (!isNonEmptyString(value)) return 'must be a non-empty string';
+  let url;
+  try {
+    url = new URL(value);
+  } catch {
+    return `is not a URL (${JSON.stringify(value)})`;
+  }
+  if (url.protocol !== 'https:') return `must use https (got ${url.protocol})`;
+  if (url.hostname !== ANALYTICS_HOST) {
+    return `must point at ${ANALYTICS_HOST} (got ${url.hostname})`;
+  }
+  if (url.username || url.password) return 'must not carry credentials';
+  if (url.search) return 'must not carry a query string';
+  return null;
+}
+
+/** A footer link is an absolute HTTPS URL or a site-relative path. */
+function footerHrefError(href) {
+  if (!isNonEmptyString(href)) return 'must be a non-empty string';
+  if (href.startsWith('//')) return 'must not be protocol-relative';
+  if (href.startsWith('/')) return null;
+  let url;
+  try {
+    url = new URL(href);
+  } catch {
+    return `is not a URL (${JSON.stringify(href)})`;
+  }
+  if (url.protocol !== 'https:') return `must use https (got ${url.protocol})`;
+  return null;
+}
+
 const CHECKED_KEYS = new Set([
   'name', 'shortName', 'titleTemplate', 'origin', 'theme', 'content', 'nav',
   'description', 'umami', 'footer', 'mdf', 'llms', 'notFound',
@@ -211,9 +253,11 @@ export function validateSiteConfig(raw) {
       }
       if (!isNonEmptyString(raw.umami.websiteId)) {
         errors.push(`${CONFIG_FILE}: "umami.websiteId" must be a non-empty string (or set "umami": null)`);
+      } else if (!UUID_PATTERN.test(raw.umami.websiteId)) {
+        errors.push(`${CONFIG_FILE}: "umami.websiteId" must be a UUID (got ${JSON.stringify(raw.umami.websiteId)})`);
       }
       if (raw.umami.scriptUrl !== undefined) {
-        const message = originError(raw.umami.scriptUrl);
+        const message = analyticsScriptUrlError(raw.umami.scriptUrl);
         if (message) errors.push(`${CONFIG_FILE}: "umami.scriptUrl" ${message}`);
       }
     }
@@ -224,14 +268,48 @@ export function validateSiteConfig(raw) {
       errors.push(`${CONFIG_FILE}: "footer" must be an object with left and right`);
     } else {
       for (const key of Object.keys(raw.footer)) {
-        if (key !== 'left' && key !== 'right') {
-          errors.push(`${CONFIG_FILE}: unknown field "footer.${key}" (known: left, right)`);
+        if (key !== 'left' && key !== 'right' && key !== 'markdown') {
+          errors.push(`${CONFIG_FILE}: unknown field "footer.${key}" (known: left, right, markdown)`);
         }
       }
       for (const key of ['left', 'right']) {
-        if (raw.footer[key] !== undefined && !isNonEmptyString(raw.footer[key])) {
-          errors.push(`${CONFIG_FILE}: "footer.${key}" must be a non-empty string`);
+        if (raw.footer[key] === undefined) continue;
+        const label = `${CONFIG_FILE}: "footer.${key}"`;
+        const entry = raw.footer[key];
+        if (typeof entry === 'string') {
+          if (!isNonEmptyString(entry)) errors.push(`${label} must be a non-empty string`);
+          continue;
         }
+        if (!Array.isArray(entry)) {
+          errors.push(`${label} must be a string or a list of segments`);
+          continue;
+        }
+        if (entry.length === 0) {
+          errors.push(`${label} must not be an empty list`);
+          continue;
+        }
+        entry.forEach((segment, index) => {
+          const at = `${label}[${index}]`;
+          if (typeof segment === 'string') {
+            if (!isNonEmptyString(segment)) errors.push(`${at} must be a non-empty string`);
+            return;
+          }
+          if (!isPlainObject(segment)) {
+            errors.push(`${at} must be a string or {text, href}`);
+            return;
+          }
+          for (const field of Object.keys(segment)) {
+            if (field !== 'text' && field !== 'href') {
+              errors.push(`${at}: unknown field "${field}" (known: text, href)`);
+            }
+          }
+          if (!isNonEmptyString(segment.text)) errors.push(`${at}.text must be a non-empty string`);
+          const hrefMessage = footerHrefError(segment.href);
+          if (hrefMessage) errors.push(`${at}.href ${hrefMessage}`);
+        });
+      }
+      if (raw.footer.markdown !== undefined && typeof raw.footer.markdown !== 'boolean') {
+        errors.push(`${CONFIG_FILE}: "footer.markdown" must be true or false`);
       }
     }
   }
