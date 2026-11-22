@@ -8,6 +8,7 @@
  */
 import '../../styles/global.css';
 import { pageTitle } from '../../lib/site-config.mjs';
+import { footerSegments } from '../../lib/footer.js';
 
 interface Props {
   title: string;
@@ -78,8 +79,12 @@ const nav = config.nav ?? [];
 
   <footer class="border-t border-bc-border mt-24">
     <div class="max-w-3xl mx-auto px-6 py-8 flex items-center justify-between text-bc-muted text-sm font-mono">
-      <span>{config.footer.left}</span>
-      <span>{config.footer.right}</span>
+      <span>{footerSegments(config.footer.left).map(segment => (
+        typeof segment === 'string' ? segment : <a href={segment.href}>{segment.text}</a>
+      ))}</span>
+      <span>{footerSegments(config.footer.right).map(segment => (
+        typeof segment === 'string' ? segment : <a href={segment.href}>{segment.text}</a>
+      ))}</span>
     </div>
   </footer>
 

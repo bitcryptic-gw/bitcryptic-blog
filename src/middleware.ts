@@ -21,6 +21,7 @@ import {
   postMarkdown,
 } from './lib/markdown-content.js';
 import { pageHtmlUrl, pageMarkdown } from './lib/page-markdown.js';
+import { footerMarkdown } from './lib/footer.js';
 import { pageFileExists, slugFromPath } from './lib/pages.mjs';
 import { contentDir, getSite, homePage, pageBySlug } from './lib/site.mjs';
 import { etagFor, ifNoneMatchMatches } from './lib/etag.js';
@@ -115,11 +116,11 @@ export const onRequest = defineMiddleware(async (context, next) => {
         const pageDoc = pageMarkdownFor(loaded, '');
         if (pageDoc) {
           console.log(markdownLogLine(pathname, 200, userAgent));
-          return markdownResponse(pageDoc.body, 200, pageDoc.url, ifNoneMatch);
+          return markdownResponse(pageDoc.body + footerMarkdown(loaded.config), 200, pageDoc.url, ifNoneMatch);
         }
         const body = indexMarkdown(loaded.posts, loaded.config);
         console.log(markdownLogLine(pathname, 200, userAgent));
-        return markdownResponse(body, 200, `${loaded.config.origin}/`, ifNoneMatch);
+        return markdownResponse(body + footerMarkdown(loaded.config), 200, `${loaded.config.origin}/`, ifNoneMatch);
       }
 
       if (postMatch) {
@@ -129,7 +130,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
           const loaded = getCachedSite();
           console.log(markdownLogLine(pathname, 200, userAgent));
           return markdownResponse(
-            postMarkdown(post, loaded.config.origin),
+            postMarkdown(post, loaded.config.origin) + footerMarkdown(loaded.config),
             200,
             postHtmlUrl(post.slug, loaded.config.origin),
             ifNoneMatch
@@ -142,7 +143,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
       const pageDoc = pageMarkdownFor(getCachedSite(), pageSlug);
       if (pageDoc) {
         console.log(markdownLogLine(pathname, 200, userAgent));
-        return markdownResponse(pageDoc.body, 200, pageDoc.url, ifNoneMatch);
+        return markdownResponse(pageDoc.body + footerMarkdown(getCachedSite().config), 200, pageDoc.url, ifNoneMatch);
       }
     } catch (error) {
       // Content not readable: fall through to the HTML route, which reports it

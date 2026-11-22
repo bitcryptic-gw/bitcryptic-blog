@@ -141,3 +141,52 @@ test('titleTemplate must contain {title}, umami may be switched off', () => {
   assert.deepEqual(validateSiteConfig({ umami: null }).errors, []);
   assert.match(validateSiteConfig({ umami: {} }).errors.join('\n'), /websiteId/);
 });
+
+const UUID = 'daac0512-c1b8-455c-b33e-216f814a4f3e';
+
+test('umami: websiteId is a UUID, scriptUrl is the one self-hosted host', () => {
+  assert.deepEqual(validateSiteConfig({ umami: { websiteId: UUID } }).errors, []);
+  assert.match(
+    validateSiteConfig({ umami: { websiteId: 'not-a-uuid' } }).errors.join('\n'),
+    /must be a UUID/
+  );
+
+  const scriptError = url =>
+    validateSiteConfig({ umami: { websiteId: UUID, scriptUrl: url } }).errors.join('\n');
+
+  assert.equal(scriptError('https://webstats.bitcryptic.com/script.js'), '');
+  assert.match(scriptError('http://webstats.bitcryptic.com/script.js'), /must use https/);
+  assert.match(scriptError('https://evil.example/script.js'), /must point at webstats\.bitcryptic\.com/);
+  assert.match(scriptError('https://webstats.bitcryptic.com/script.js?v=2'), /query/i);
+  assert.match(scriptError('https://user:pass@webstats.bitcryptic.com/script.js'), /credentials/);
+});
+
+test('footer entries may be a string or a segment list; markdown is opt-in', () => {
+  const config = mergeConfig({
+    footer: {
+      left: 'Open source',
+      right: [
+        'Content ',
+        { text: 'CC BY 4.0', href: 'https://creativecommons.org/licenses/by/4.0/' },
+        ' · ',
+        { text: 'BitCryptic™', href: 'https://bitcryptic.com' },
+      ],
+      markdown: true,
+    },
+  });
+  assert.equal(config.footer.markdown, true);
+  assert.equal(config.footer.left, 'Open source');
+
+  assert.deepEqual(validateSiteConfig({ footer: { right: [{ text: 'x', href: '/licence/' }] } }).errors, []);
+  assert.match(validateSiteConfig({ footer: { right: [] } }).errors.join('\n'), /must not be an empty list/);
+  assert.match(
+    validateSiteConfig({ footer: { right: [{ text: 'x', href: 'http://x.example/' }] } }).errors.join('\n'),
+    /must use https/
+  );
+  assert.match(
+    validateSiteConfig({ footer: { right: [{ text: 'x', href: '//x.example/' }] } }).errors.join('\n'),
+    /protocol-relative/
+  );
+  assert.match(validateSiteConfig({ footer: { right: [{ href: '/x/' }] } }).errors.join('\n'), /text/);
+  assert.match(validateSiteConfig({ footer: { markdown: 'yes' } }).errors.join('\n'), /must be true or false/);
+});

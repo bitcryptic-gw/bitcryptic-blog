@@ -9,6 +9,7 @@
  * therefore unaffected by this theme existing in the image.
  */
 import { pageTitle } from '../../lib/site-config.mjs';
+import { footerSegments } from '../../lib/footer.js';
 
 const stylesheets = import.meta.glob('./theme.css', {
   query: '?url',
@@ -72,8 +73,12 @@ const nav = config.nav ?? [];
     </main>
 
     <footer class="mdf-footer">
-      <span>{config.footer.left}</span>
-      <span>{config.footer.right}</span>
+      <span>{footerSegments(config.footer.left).map(segment => (
+        typeof segment === 'string' ? segment : <a href={segment.href}>{segment.text}</a>
+      ))}</span>
+      <span>{footerSegments(config.footer.right).map(segment => (
+        typeof segment === 'string' ? segment : <a href={segment.href}>{segment.text}</a>
+      ))}</span>
     </footer>
   </div>
 </body>
